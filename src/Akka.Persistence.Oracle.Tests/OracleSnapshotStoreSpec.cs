@@ -12,7 +12,7 @@ namespace Akka.Persistence.Oracle.Tests
 
         static OracleSnapshotStoreSpec()
         {
-            const string SpecString = @"
+            SpecConfig = ConfigurationFactory.ParseString(@"
                 akka.persistence {
                     publish-plugin-commands = on
                     snapshot-store {
@@ -26,15 +26,13 @@ namespace Akka.Persistence.Oracle.Tests
                             connection-string-name = ""TestDb""
                         }
                     }
-                }";
-
-            SpecConfig = ConfigurationFactory.ParseString(SpecString);
-            DbUtils.Clean();
+                }");
         }
 
         public OracleSnapshotStoreSpec(ITestOutputHelper output)
             : base(SpecConfig, "OracleSnapshotStoreSpec", output)
         {
+            OraclePersistence.Get(Sys);
             Initialize();
         }
 
@@ -42,23 +40,6 @@ namespace Akka.Persistence.Oracle.Tests
         {
             base.Dispose(disposing);
             DbUtils.Clean();
-        }
-
-        [Fact]
-        public new void SnapshotStore_should_save_and_overwrite_snapshot_with_same_sequence_number()
-        {
-            var senderProbe = CreateTestProbe();
-            var md = Metadata[4];
-            SnapshotStore.Tell(new SaveSnapshot(md, "s-5-modified"), senderProbe.Ref);
-
-            var md2 = senderProbe.ExpectMsg<SaveSnapshotSuccess>().Metadata;
-            Assert.Equal(md.SequenceNr, md2.SequenceNr);
-            SnapshotStore.Tell(new LoadSnapshot(Pid, new SnapshotSelectionCriteria(md.SequenceNr), long.MaxValue), senderProbe.Ref);
-
-            var result = senderProbe.ExpectMsg<LoadSnapshotResult>();
-            Assert.Equal("s-5-modified", result.Snapshot.Snapshot.ToString());
-            Assert.Equal(md.SequenceNr, result.Snapshot.Metadata.SequenceNr);
-            // metadata timestamp may have been changed
         }
     }
 }

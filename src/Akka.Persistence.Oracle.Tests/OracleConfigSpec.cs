@@ -13,6 +13,7 @@ namespace Akka.Persistence.Oracle.Tests
             var config = Sys.Settings.Config.GetConfig("akka.persistence.journal.oracle");
 
             Assert.NotNull(config);
+            Assert.Equal("akka.persistence.journal.oracle", Sys.Settings.Config.GetString("akka.persistence.journal.plugin"));
             Assert.Equal("Akka.Persistence.Oracle.Journal.OracleJournal, Akka.Persistence.Oracle", config.GetString("class"));
             Assert.Equal("akka.actor.default-dispatcher", config.GetString("plugin-dispatcher"));
             Assert.Equal(string.Empty, config.GetString("connection-string"));
@@ -32,6 +33,7 @@ namespace Akka.Persistence.Oracle.Tests
             var config = Sys.Settings.Config.GetConfig("akka.persistence.snapshot-store.oracle");
 
             Assert.NotNull(config);
+            Assert.Equal("akka.persistence.snapshot-store.oracle", Sys.Settings.Config.GetString("akka.persistence.snapshot-store.plugin"));
             Assert.Equal("Akka.Persistence.Oracle.Snapshot.OracleSnapshotStore, Akka.Persistence.Oracle", config.GetString("class"));
             Assert.Equal("akka.actor.default-dispatcher", config.GetString("plugin-dispatcher"));
             Assert.Equal(string.Empty, config.GetString("connection-string"));

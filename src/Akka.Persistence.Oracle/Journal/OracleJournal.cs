@@ -1,59 +1,42 @@
-﻿using System.Data.Common;
-using System.Threading.Tasks;
+﻿//-----------------------------------------------------------------------
+// <copyright file="OracleJournal.cs" company="Akka.NET Project">
+//     Copyright (C) 2009-2016 Lightbend Inc. <http://www.lightbend.com>
+//     Copyright (C) 2013-2016 Akka.NET project <https://github.com/akkadotnet/akka.net>
+// </copyright>
+//-----------------------------------------------------------------------
+
+using System.Data.Common;
+using Akka.Configuration;
 using Akka.Persistence.Sql.Common.Journal;
 using Oracle.ManagedDataAccess.Client;
 
 namespace Akka.Persistence.Oracle.Journal
 {
-    /// <summary>
-    /// Persistent journal actor using Oracle as persistence layer. It processes write requests
-    /// one by one in asynchronous manner, while reading results asynchronously.
-    /// </summary>
     public class OracleJournal : SqlJournal
     {
-        private readonly string updateSequenceNrSql;
-        public readonly OraclePersistence Extension = OraclePersistence.Get(Context.System);
+        public static readonly OraclePersistence Extension = OraclePersistence.Get(Context.System);
 
-        public OracleJournal()
-            : base(new OracleJournalEngine(Context.System))
+        public OracleJournal(Config journalConfig) 
+            : base(journalConfig)
         {
-            var schemaName = Extension.JournalSettings.SchemaName;
-            var tableName = Extension.JournalSettings.MetadataTableName;
-
-            updateSequenceNrSql = @"
-MERGE INTO {0}.{1} USING DUAL ON (PersistenceId = :PersistenceId)
-WHEN MATCHED THEN UPDATE SET SequenceNr = :SequenceNr 
-WHEN NOT MATCHED THEN INSERT (PersistenceId, SequenceNr) VALUES (:PersistenceId, :SequenceNr)".QuoteSchemaAndTable(schemaName, tableName);
+            var config = journalConfig.WithFallback(Extension.DefaultJournalConfig);
+            QueryExecutor = new OracleQueryExecutor(new QueryConfiguration(
+                schemaName: config.GetString("schema-name"),
+                journalEventsTableName: config.GetString("table-name"),
+                metaTableName: config.GetString("metadata-table-name"),
+                persistenceIdColumnName: "PersistenceId",
+                sequenceNrColumnName: "SequenceNr",
+                payloadColumnName: "Payload",
+                manifestColumnName: "Manifest",
+                timestampColumnName: "Timestamp",
+                isDeletedColumnName: "IsDeleted",
+                tagsColumnName: "Tags",
+                timeout: config.GetTimeSpan("connection-timeout")), Context.System.Serialization, GetTimestampProvider(config.GetString("timestamp-provider")));
         }
 
-        protected override async Task DeleteMessagesToAsync(string persistenceId, long toSequenceNr)
-        {
-            var highestSequenceNr = await DbEngine.ReadHighestSequenceNrAsync(persistenceId, 0);
-            await base.DeleteMessagesToAsync(persistenceId, toSequenceNr);
+        protected override DbConnection CreateDbConnection(string connectionString) => new OracleConnection(connectionString);
 
-            if (highestSequenceNr <= toSequenceNr)
-            {
-                await UpdateSequenceNr(persistenceId, highestSequenceNr);
-            }
-        }
-
-        private async Task UpdateSequenceNr(string persistenceId, long toSequenceNr)
-        {
-            using (var connection = DbEngine.CreateDbConnection())
-            {
-                await connection.OpenAsync();
-
-                using (DbCommand sqlCommand = new OracleCommand(updateSequenceNrSql) { BindByName = true })
-                {
-                    sqlCommand.Parameters.Add(new OracleParameter(":PersistenceId", OracleDbType.NVarchar2, persistenceId.Length) { Value = persistenceId });
-                    sqlCommand.Parameters.Add(new OracleParameter(":SequenceNr", OracleDbType.Int64) { Value = toSequenceNr });
-
-                    sqlCommand.Connection = connection;
-                    sqlCommand.CommandTimeout = (int)Extension.JournalSettings.ConnectionTimeout.TotalMilliseconds;
-
-                    await sqlCommand.ExecuteNonQueryAsync();
-                }
-            }
-        }
+        protected override string JournalConfigPath => OracleJournalSettings.ConfigPath;
+        public override IJournalQueryExecutor QueryExecutor { get; }
     }
 }

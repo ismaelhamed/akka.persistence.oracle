@@ -1,13 +1,12 @@
-﻿using Oracle.ManagedDataAccess.Client;
+﻿using System;
 
 namespace Akka.Persistence.Oracle
 {
     internal static class InternalExtensions
     {
-        public static string QuoteSchemaAndTable(this string sqlQuery, string schemaName, string tableName)
+        public static string QualifiedTypeName(this Type type)
         {
-            var builder = new OracleCommandBuilder();
-            return string.Format(sqlQuery, builder.QuoteIdentifier(schemaName), builder.QuoteIdentifier(tableName));
+            return type.FullName + ", " + type.Assembly.GetName().Name;
         }
     }
 }

@@ -83,28 +83,29 @@ Oracle persistence plugin defines a default table schema used for journal, snaps
 
 ```SQL
 CREATE TABLE {your_journal_table_name} (
-    PersistenceID NVARCHAR2(255) NOT NULL,
+    PersistenceId NVARCHAR2(255) NOT NULL,
     SequenceNr NUMBER(19,0) NOT NULL,
-    Timestamp TIMESTAMP(7) NOT NULL,
+    Timestamp NUMBER(19,0) NOT NULL,
     IsDeleted NUMBER(1,0) DEFAULT(0) NOT NULL CHECK (IsDeleted IN (1,0)),
     Manifest NVARCHAR2(500) NOT NULL,
     Payload BLOB NOT NULL,
-    CONSTRAINT PK_{your_journal_table_name} PRIMARY KEY (PersistenceID, SequenceNr)
+    Tags NVARCHAR2(2000) NULL,
+    CONSTRAINT PK_{your_journal_table_name} PRIMARY KEY (PersistenceId, SequenceNr)
 );
 
 CREATE TABLE {your_snapshot_table_name} (
-    PersistenceID NVARCHAR2(255) NOT NULL,
+    PersistenceId NVARCHAR2(255) NOT NULL,
     SequenceNr NUMBER(19,0) NOT NULL,
     Timestamp TIMESTAMP(7) NOT NULL,
     Manifest NVARCHAR2(500) NOT NULL,
     Snapshot BLOB NOT NULL,
-    CONSTRAINT PK_{your_snapshot_table_name} PRIMARY KEY (PersistenceID, SequenceNr)
+    CONSTRAINT PK_{your_snapshot_table_name} PRIMARY KEY (PersistenceId, SequenceNr)
 );
 
 CREATE TABLE {your_metadata_table_name} (
-    PersistenceID NVARCHAR2(255) NOT NULL,
+    PersistenceId NVARCHAR2(255) NOT NULL,
     SequenceNr NUMBER(19,0) NOT NULL,
-    CONSTRAINT PK_{your_metadata_table_name} PRIMARY KEY (PersistenceID, SequenceNr)
+    CONSTRAINT PK_{your_metadata_table_name} PRIMARY KEY (PersistenceId, SequenceNr)
 );
 ```
 

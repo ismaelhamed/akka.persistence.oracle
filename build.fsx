@@ -16,6 +16,7 @@ cd __SOURCE_DIRECTORY__
 // Information about the project for Nuget and Assembly info files
 //--------------------------------------------------------------------------------
 
+
 let product = "Akka.NET"
 let authors = [ "Akka.NET Team" ]
 let copyright = "Copyright © 2013-2015 Akka.NET Team"
