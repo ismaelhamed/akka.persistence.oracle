@@ -20,6 +20,7 @@ namespace Akka.Persistence.Oracle.Tests
         static OracleJournalQuerySpec()
         {
             SpecConfig = ConfigurationFactory.ParseString(@"
+                akka.test.single-expect-default = 10s
                 akka.persistence {
                     publish-plugin-commands = on
                     journal {

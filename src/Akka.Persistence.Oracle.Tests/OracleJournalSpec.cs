@@ -1,5 +1,4 @@
-﻿using System.Configuration;
-using Akka.Configuration;
+﻿using Akka.Configuration;
 using Akka.Persistence.TestKit.Journal;
 using Xunit;
 using Xunit.Abstractions;
@@ -13,9 +12,8 @@ namespace Akka.Persistence.Oracle.Tests
 
         static OracleJournalSpec()
         {
-            var connectionString = ConfigurationManager.ConnectionStrings["TestDb"].ConnectionString;
-
             SpecConfig = ConfigurationFactory.ParseString(@"
+                akka.test.single-expect-default = 10s
                 akka.persistence {
                     publish-plugin-commands = on
                     journal {
@@ -26,7 +24,7 @@ namespace Akka.Persistence.Oracle.Tests
                             table-name = EVENTJOURNAL
                             schema-name = AKKA_PERSISTENCE_TEST
                             auto-initialize = on
-                            connection-string = """ + connectionString + @"""
+                            connection-string-name = ""TestDb""
                         }
                     }
                 }");

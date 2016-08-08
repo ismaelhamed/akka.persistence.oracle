@@ -13,6 +13,7 @@ namespace Akka.Persistence.Oracle.Tests
         static OracleSnapshotStoreSpec()
         {
             SpecConfig = ConfigurationFactory.ParseString(@"
+                akka.test.single-expect-default = 10s
                 akka.persistence {
                     publish-plugin-commands = on
                     snapshot-store {

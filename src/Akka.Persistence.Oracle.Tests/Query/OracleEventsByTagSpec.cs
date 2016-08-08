@@ -14,26 +14,29 @@ namespace Akka.Persistence.Oracle.Tests.Query
 {
     public class OracleEventsByTagSpec : EventsByTagSpec
     {
-        public static Config Config => ConfigurationFactory.ParseString(@"
-            akka.loglevel = DEBUG
+        private static Config Config => ConfigurationFactory.ParseString(@"
             akka.test.single-expect-default = 10s
-            akka.persistence.journal.plugin = ""akka.persistence.journal.oracle""
-            akka.persistence.journal.oracle {
-                event-adapters {
-                  color-tagger  = ""Akka.Persistence.Sql.TestKit.ColorTagger, Akka.Persistence.Sql.TestKit""
+            akka.persistence {
+                publish-plugin-commands = on
+                journal {
+                    plugin = ""akka.persistence.journal.oracle""
+                    oracle {
+                        event-adapters {
+                            color-tagger  = ""Akka.Persistence.Sql.TestKit.ColorTagger, Akka.Persistence.Sql.TestKit""
+                        }
+                        event-adapter-bindings = {
+                            ""System.String"" = color-tagger
+                        }
+                        class = ""Akka.Persistence.Oracle.Journal.OracleJournal, Akka.Persistence.Oracle""
+                        plugin-dispatcher = ""akka.actor.default-dispatcher""
+                        table-name = EVENTJOURNAL
+                        schema-name = AKKA_PERSISTENCE_TEST
+                        auto-initialize = on
+                        connection-string-name = ""TestDb""
+                        refresh-interval = 1s
+                    }
                 }
-                event-adapter-bindings = {
-                  ""System.String"" = color-tagger
-                }
-                class = ""Akka.Persistence.Oracle.Journal.OracleJournal, Akka.Persistence.Oracle""
-                plugin-dispatcher = ""akka.actor.default-dispatcher""
-                table-name = EVENTJOURNAL
-                schema-name = AKKA_PERSISTENCE_TEST
-                auto-initialize = on
-                connection-string-name = ""TestDb""
-                refresh-interval = 1s
-            }")
-            .WithFallback(SqlReadJournal.DefaultConfiguration());
+            }").WithFallback(SqlReadJournal.DefaultConfiguration());
 
         public OracleEventsByTagSpec(ITestOutputHelper output) 
             : base(Config, output)

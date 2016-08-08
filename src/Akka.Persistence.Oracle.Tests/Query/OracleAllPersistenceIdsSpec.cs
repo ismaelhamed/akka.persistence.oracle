@@ -14,20 +14,23 @@ namespace Akka.Persistence.Oracle.Tests.Query
 {
     public class OracleAllPersistenceIdsSpec : AllPersistenceIdsSpec
     {
-        public static Config Config => ConfigurationFactory.ParseString(@"
-            akka.loglevel = INFO
+        private static Config Config => ConfigurationFactory.ParseString(@"
             akka.test.single-expect-default = 10s
-            akka.persistence.journal.plugin = ""akka.persistence.journal.oracle""
-            akka.persistence.journal.oracle {
-                class = ""Akka.Persistence.Oracle.Journal.OracleJournal, Akka.Persistence.Oracle""
-                plugin-dispatcher = ""akka.actor.default-dispatcher""
-                table-name = EVENTJOURNAL
-                schema-name = AKKA_PERSISTENCE_TEST
-                auto-initialize = on
-                connection-string-name = ""TestDb""
-                refresh-interval = 1s
-            }")
-            .WithFallback(SqlReadJournal.DefaultConfiguration());
+            akka.persistence {
+                publish-plugin-commands = on
+                journal {
+                    plugin = ""akka.persistence.journal.oracle""
+                    oracle {
+                        class = ""Akka.Persistence.Oracle.Journal.OracleJournal, Akka.Persistence.Oracle""
+                        plugin-dispatcher = ""akka.actor.default-dispatcher""
+                        table-name = EVENTJOURNAL
+                        schema-name = AKKA_PERSISTENCE_TEST
+                        auto-initialize = on
+                        connection-string-name = ""TestDb""
+                        refresh-interval = 1s
+                    }
+                }
+            }").WithFallback(SqlReadJournal.DefaultConfiguration());
 
         public OracleAllPersistenceIdsSpec(ITestOutputHelper output)
             : base(Config, output)

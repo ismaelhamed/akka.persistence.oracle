@@ -46,9 +46,7 @@ WHERE {Configuration.PersistenceIdColumnName} = :PersistenceId AND {Configuratio
             InsertSnapshotSql = $@"
 MERGE INTO {configuration.FullSnapshotTableName} USING DUAL ON ({configuration.PersistenceIdColumnName} = :PersistenceId AND {configuration.SequenceNrColumnName} = :SequenceNr)
 WHEN MATCHED THEN 
-    UPDATE SET 
-        {configuration.TimestampColumnName} = :Timestamp, 
-        {configuration.PayloadColumnName} = :Payload 
+    UPDATE SET {configuration.TimestampColumnName} = :Timestamp, {configuration.PayloadColumnName} = :Payload 
 WHEN NOT MATCHED THEN 
     INSERT ({configuration.PersistenceIdColumnName}, {configuration.SequenceNrColumnName}, {configuration.TimestampColumnName}, {configuration.ManifestColumnName}, {configuration.PayloadColumnName}) 
     VALUES (:PersistenceId, :SequenceNr, :Timestamp, :Manifest, :Payload)";

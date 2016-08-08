@@ -53,7 +53,7 @@ akka.persistence {
             class = "Akka.Persistence.Oracle.Snapshot.OracleSnapshotStore, Akka.Persistence.Oracle"
 
             # dispatcher used to drive journal actor
-            plugin-dispatcher = ""akka.actor.default-dispatcher""
+            plugin-dispatcher = "akka.actor.default-dispatcher"
 
             # connection string used for database access
             connection-string = ""
@@ -86,7 +86,7 @@ CREATE TABLE {your_journal_table_name} (
     PersistenceId NVARCHAR2(255) NOT NULL,
     SequenceNr NUMBER(19,0) NOT NULL,
     Timestamp NUMBER(19,0) NOT NULL,
-    IsDeleted NUMBER(1,0) DEFAULT(0) NOT NULL CHECK (IsDeleted IN (1,0)),
+    IsDeleted NUMBER(1,0) DEFAULT(0) NOT NULL CHECK (IsDeleted IN (0,1)),
     Manifest NVARCHAR2(500) NOT NULL,
     Payload BLOB NOT NULL,
     Tags NVARCHAR2(2000) NULL,

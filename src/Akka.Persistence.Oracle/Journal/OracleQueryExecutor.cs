@@ -6,6 +6,7 @@
 //-----------------------------------------------------------------------
 
 using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Data.Common;
 using System.Linq;
@@ -14,6 +15,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Akka.Actor;
 using Akka.Persistence.Sql.Common.Journal;
+using Akka.Persistence.Sql.Common.Queries;
 using Oracle.ManagedDataAccess.Client;
 
 namespace Akka.Persistence.Oracle.Journal
@@ -66,18 +68,22 @@ FROM {Configuration.FullJournalTableName} e
 WHERE e.{Configuration.PersistenceIdColumnName} = :PersistenceId AND e.{Configuration.SequenceNrColumnName} BETWEEN :FromSequenceNr AND :ToSequenceNr";
 
             ByTagSql = $@"
-SELECT 
-    e.{Configuration.PersistenceIdColumnName} as PersistenceId, 
-    e.{Configuration.SequenceNrColumnName} as SequenceNr, 
-    e.{Configuration.TimestampColumnName} as Timestamp, 
-    e.{Configuration.IsDeletedColumnName} as IsDeleted, 
-    e.{Configuration.ManifestColumnName} as Manifest, 
-    e.{Configuration.PayloadColumnName} as Payload, 
-    ROW_NUMBER() OVER (ORDER BY e.{Configuration.PersistenceIdColumnName}, e.{Configuration.SequenceNrColumnName}) AS RowNumber
-FROM { Configuration.FullJournalTableName} e
-WHERE e.{ Configuration.TagsColumnName} LIKE :Tag    
-ORDER BY { Configuration.PersistenceIdColumnName}, { Configuration.SequenceNrColumnName}
-OFFSET :Skip ROWS FETCH NEXT :Take ROWS ONLY";
+SELECT *
+FROM (
+    SELECT 
+        e.{Configuration.PersistenceIdColumnName} AS PersistenceId, 
+        e.{Configuration.SequenceNrColumnName} AS SequenceNr, 
+        e.{Configuration.TimestampColumnName} AS Timestamp, 
+        e.{Configuration.IsDeletedColumnName} AS IsDeleted, 
+        e.{Configuration.ManifestColumnName} AS Manifest, 
+        e.{Configuration.PayloadColumnName} AS Payload, 
+        e.{Configuration.TagsColumnName} AS Tags,
+        ROW_NUMBER() OVER (ORDER BY e.{Configuration.PersistenceIdColumnName}, e.{Configuration.SequenceNrColumnName}) AS RowNumber
+    FROM { Configuration.FullJournalTableName} e
+    WHERE e.{ Configuration.TagsColumnName} LIKE :Tag
+    ORDER BY { Configuration.PersistenceIdColumnName}, { Configuration.SequenceNrColumnName}
+)
+WHERE RowNumber > :Skip AND RowNumber <= :Take";
 
             InsertEventSql = $@"
 INSERT INTO {Configuration.FullJournalTableName} (
@@ -104,7 +110,7 @@ BEGIN
                 {configuration.PersistenceIdColumnName} NVARCHAR2(255) NOT NULL,
                 {configuration.SequenceNrColumnName} NUMBER(19,0) NOT NULL,
                 {configuration.TimestampColumnName} NUMBER(19,0) NOT NULL,
-                {configuration.IsDeletedColumnName} NUMBER(1,0) DEFAULT(0) NOT NULL CHECK (IsDeleted IN (1,0)),
+                {configuration.IsDeletedColumnName} NUMBER(1,0) DEFAULT(0) NOT NULL CHECK (IsDeleted IN (0,1)),
                 {configuration.ManifestColumnName} NVARCHAR2(500) NOT NULL,
                 {configuration.PayloadColumnName} BLOB NOT NULL,
                 {configuration.TagsColumnName} NVARCHAR2(2000) NULL,
@@ -283,6 +289,69 @@ END;";
                     else tx.Commit();
                 }
             }
+        }
+
+        public override async Task SelectEventsAsync(DbConnection connection, CancellationToken cancellationToken, IEnumerable<IHint> hints, Action<IPersistentRepresentation> callback)
+        {
+            using (var command = GetCommand(connection, QueryEventsSql))
+            {
+                command.CommandText += string.Join(" AND ", hints.Select(h => HintToSql(h, command)));
+                command.CommandText += $" ORDER BY {Configuration.PersistenceIdColumnName}, {Configuration.SequenceNrColumnName}";
+
+                using (var reader = await command.ExecuteReaderAsync(cancellationToken))
+                {
+                    while (await reader.ReadAsync(cancellationToken))
+                    {
+                        var persistent = ReadEvent(reader);
+                        callback(persistent);
+                    }
+                }
+            }
+        }
+
+        protected override string HintToSql(IHint hint, DbCommand command)
+        {
+            if (hint is TimestampRange)
+            {
+                var range = (TimestampRange)hint;
+                var sb = new StringBuilder();
+
+                if (range.From.HasValue)
+                {
+                    sb.Append(" e.").Append(Configuration.TimestampColumnName).Append(" >= :TimestampFrom ");
+                    AddParameter(command, ":TimestampFrom", OracleDbType.Int64, range.From.Value);
+                }
+                if (range.From.HasValue && range.To.HasValue) sb.Append("AND");
+                if (range.To.HasValue)
+                {
+                    sb.Append(" e.").Append(Configuration.TimestampColumnName).Append(" < :TimestampTo ");
+                    AddParameter(command, ":TimestampTo", OracleDbType.Int64, range.To.Value);
+                }
+
+                return sb.ToString();
+            }
+            if (hint is PersistenceIdRange)
+            {
+                var range = (PersistenceIdRange)hint;
+                var sb = new StringBuilder(" e.").Append(Configuration.PersistenceIdColumnName).Append(" IN (");
+                var i = 0;
+                foreach (var persistenceId in range.PersistenceIds)
+                {
+                    var paramName = ":Pid" + (i++);
+                    sb.Append(paramName).Append(',');
+                    AddParameter(command, paramName, OracleDbType.NVarchar2, persistenceId);
+                }
+                return range.PersistenceIds.Count == 0
+                    ? string.Empty
+                    : sb.Remove(sb.Length - 1, 1).Append(')').ToString();
+            }
+            else if (hint is WithManifest)
+            {
+                var manifest = (WithManifest)hint;
+                AddParameter(command, ":Manifest", OracleDbType.NVarchar2, manifest.Manifest);
+                return $" e.{Configuration.ManifestColumnName} = :Manifest";
+            }
+            else throw new NotSupportedException($"Oracle journal doesn't support query with hint [{hint.GetType()}]");
         }
     }
 }
