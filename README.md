@@ -82,30 +82,45 @@ akka.persistence {
 Oracle persistence plugin defines a default table schema used for journal, snapshot store and metadata table.
 
 ```SQL
-CREATE TABLE {your_journal_table_name} (
+CREATE TABLE EVENTJOURNAL (
+    Ordering INTEGER NOT NULL,
     PersistenceId NVARCHAR2(255) NOT NULL,
     SequenceNr NUMBER(19,0) NOT NULL,
     Timestamp NUMBER(19,0) NOT NULL,
     IsDeleted NUMBER(1,0) DEFAULT(0) NOT NULL CHECK (IsDeleted IN (0,1)),
     Manifest NVARCHAR2(500) NOT NULL,
     Payload BLOB NOT NULL,
-    Tags NVARCHAR2(2000) NULL,
-    CONSTRAINT PK_{your_journal_table_name} PRIMARY KEY (PersistenceId, SequenceNr)
+    Tags NVARCHAR2(100) NULL,
+    CONSTRAINT QU_EVENTJOURNAL UNIQUE (PersistenceId, SequenceNr)
 );
 
-CREATE TABLE {your_snapshot_table_name} (
+CREATE SEQUENCE EVENTJOURNAL_SEQ
+    START WITH 1
+    INCREMENT BY 1
+    NOCACHE;
+
+CREATE OR REPLACE TRIGGER EVENTJOURNAL_TRG 
+BEFORE INSERT ON TITANIUMDLMSHE.EVENTJOURNAL 
+FOR EACH ROW
+BEGIN
+    :new.Ordering := EVENTJOURNAL_SEQ.NEXTVAL;
+END;
+
+ALTER TRIGGER EVENTJOURNAL_TRG ENABLE;
+
+CREATE TABLE METADATA (
+    PersistenceId NVARCHAR2(255) NOT NULL,
+    SequenceNr NUMBER(19,0) NOT NULL,
+    CONSTRAINT PK_METADATA PRIMARY KEY (PersistenceId, SequenceNr)
+);
+
+CREATE TABLE SNAPSHOTSTORE (
     PersistenceId NVARCHAR2(255) NOT NULL,
     SequenceNr NUMBER(19,0) NOT NULL,
     Timestamp TIMESTAMP(7) NOT NULL,
     Manifest NVARCHAR2(500) NOT NULL,
     Snapshot BLOB NOT NULL,
-    CONSTRAINT PK_{your_snapshot_table_name} PRIMARY KEY (PersistenceId, SequenceNr)
-);
-
-CREATE TABLE {your_metadata_table_name} (
-    PersistenceId NVARCHAR2(255) NOT NULL,
-    SequenceNr NUMBER(19,0) NOT NULL,
-    CONSTRAINT PK_{your_metadata_table_name} PRIMARY KEY (PersistenceId, SequenceNr)
+    CONSTRAINT PK_SNAPSHOTSTORE PRIMARY KEY (PersistenceId, SequenceNr)
 );
 ```
 

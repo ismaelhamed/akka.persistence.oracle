@@ -35,6 +35,14 @@ namespace Akka.Persistence.Oracle.Journal
         public OracleQueryExecutor(QueryConfiguration configuration, Akka.Serialization.Serialization serialization, ITimestampProvider timestampProvider)
             : base(configuration, serialization, timestampProvider)
         {
+            var allEventColumnNames = $@"
+                e.{Configuration.PersistenceIdColumnName} AS PersistenceId, 
+                e.{Configuration.SequenceNrColumnName} AS SequenceNr, 
+                e.{Configuration.TimestampColumnName} AS Timestamp, 
+                e.{Configuration.IsDeletedColumnName} AS IsDeleted, 
+                e.{Configuration.ManifestColumnName} AS Manifest, 
+                e.{Configuration.PayloadColumnName} AS Payload";
+
             AllPersistenceIdsSql = $@"
 SELECT DISTINCT e.{Configuration.PersistenceIdColumnName} AS PersistenceId 
 FROM {Configuration.FullJournalTableName} e";
@@ -57,33 +65,15 @@ INSERT INTO {Configuration.FullMetaTableName} ({Configuration.PersistenceIdColum
 VALUES (:PersistenceId, :SequenceNr)";
 
             ByPersistenceIdSql = $@"
-SELECT 
-    e.{Configuration.PersistenceIdColumnName} as PersistenceId, 
-    e.{Configuration.SequenceNrColumnName} as SequenceNr, 
-    e.{Configuration.TimestampColumnName} as Timestamp, 
-    e.{Configuration.IsDeletedColumnName} as IsDeleted, 
-    e.{Configuration.ManifestColumnName} as Manifest, 
-    e.{Configuration.PayloadColumnName} as Payload
+SELECT {allEventColumnNames}
 FROM {Configuration.FullJournalTableName} e
 WHERE e.{Configuration.PersistenceIdColumnName} = :PersistenceId AND e.{Configuration.SequenceNrColumnName} BETWEEN :FromSequenceNr AND :ToSequenceNr";
 
             ByTagSql = $@"
-SELECT *
-FROM (
-    SELECT 
-        e.{Configuration.PersistenceIdColumnName} AS PersistenceId, 
-        e.{Configuration.SequenceNrColumnName} AS SequenceNr, 
-        e.{Configuration.TimestampColumnName} AS Timestamp, 
-        e.{Configuration.IsDeletedColumnName} AS IsDeleted, 
-        e.{Configuration.ManifestColumnName} AS Manifest, 
-        e.{Configuration.PayloadColumnName} AS Payload, 
-        e.{Configuration.TagsColumnName} AS Tags,
-        ROW_NUMBER() OVER (ORDER BY e.{Configuration.PersistenceIdColumnName}, e.{Configuration.SequenceNrColumnName}) AS RowNumber
-    FROM { Configuration.FullJournalTableName} e
-    WHERE e.{ Configuration.TagsColumnName} LIKE :Tag
-    ORDER BY { Configuration.PersistenceIdColumnName}, { Configuration.SequenceNrColumnName}
-)
-WHERE RowNumber > :Skip AND RowNumber <= :Take";
+SELECT {allEventColumnNames}, e.{Configuration.OrderingColumnName} AS Ordering
+FROM { Configuration.FullJournalTableName} e
+WHERE e.{Configuration.OrderingColumnName} > :Ordering AND e.{Configuration.TagsColumnName} LIKE :Tag
+ORDER BY {Configuration.OrderingColumnName} ASC";
 
             InsertEventSql = $@"
 INSERT INTO {Configuration.FullJournalTableName} (
@@ -105,20 +95,39 @@ BEGIN
     WHERE EXISTS (SELECT OBJECT_NAME FROM USER_OBJECTS WHERE (OBJECT_NAME = UPPER('{configuration.JournalEventsTableName}') AND OBJECT_TYPE = 'TABLE'));
 
     IF table_count = 0 THEN 
-        EXECUTE IMMEDIATE(
-            'CREATE TABLE {configuration.FullJournalTableName} (
+        EXECUTE IMMEDIATE '
+            CREATE TABLE {configuration.FullJournalTableName} (
+                {configuration.OrderingColumnName} INTEGER NOT NULL,
                 {configuration.PersistenceIdColumnName} NVARCHAR2(255) NOT NULL,
                 {configuration.SequenceNrColumnName} NUMBER(19,0) NOT NULL,
                 {configuration.TimestampColumnName} NUMBER(19,0) NOT NULL,
                 {configuration.IsDeletedColumnName} NUMBER(1,0) DEFAULT(0) NOT NULL CHECK (IsDeleted IN (0,1)),
                 {configuration.ManifestColumnName} NVARCHAR2(500) NOT NULL,
                 {configuration.PayloadColumnName} BLOB NOT NULL,
-                {configuration.TagsColumnName} NVARCHAR2(2000) NULL,
-                CONSTRAINT PK_{configuration.JournalEventsTableName} PRIMARY KEY ({configuration.PersistenceIdColumnName}, {configuration.SequenceNrColumnName})
-            )'
-        );
-        EXECUTE IMMEDIATE ('CREATE INDEX IX_{configuration.JournalEventsTableName}_{configuration.SequenceNrColumnName} ON {configuration.FullJournalTableName}({configuration.SequenceNrColumnName})');
-        EXECUTE IMMEDIATE ('CREATE INDEX IX_{configuration.JournalEventsTableName}_{configuration.TimestampColumnName} ON {configuration.FullJournalTableName}({configuration.TimestampColumnName})');       
+                {configuration.TagsColumnName} NVARCHAR2(100) NULL,
+                CONSTRAINT QU_{configuration.JournalEventsTableName} UNIQUE({configuration.PersistenceIdColumnName}, {configuration.SequenceNrColumnName})
+            )';
+
+        EXECUTE IMMEDIATE '
+            CREATE SEQUENCE {configuration.JournalEventsTableName}_SEQ
+                START WITH 1
+                INCREMENT BY 1
+                NOCACHE
+            ';
+
+        EXECUTE IMMEDIATE '
+            CREATE OR REPLACE TRIGGER {configuration.JournalEventsTableName}_TRG 
+             BEFORE INSERT ON {configuration.JournalEventsTableName} 
+             FOR EACH ROW
+             BEGIN
+                :new.{configuration.OrderingColumnName} := {configuration.JournalEventsTableName}_SEQ.NEXTVAL;
+             END;
+            ';
+
+        EXECUTE IMMEDIATE 'ALTER TRIGGER {configuration.JournalEventsTableName}_TRG ENABLE';
+
+        EXECUTE IMMEDIATE 'CREATE INDEX IX_{configuration.JournalEventsTableName}_{configuration.SequenceNrColumnName} ON {configuration.FullJournalTableName}({configuration.SequenceNrColumnName})';
+        EXECUTE IMMEDIATE 'CREATE INDEX IX_{configuration.JournalEventsTableName}_{configuration.TimestampColumnName} ON {configuration.FullJournalTableName}({configuration.TimestampColumnName})';       
     END IF;
 END;";
 
@@ -220,11 +229,10 @@ END;";
         {
             using (var command = (OracleCommand)GetCommand(connection, ByTagSql))
             {
-                fromOffset = Math.Max(1, fromOffset);
                 var take = Math.Min(toOffset - fromOffset, max);
 
                 AddParameter(command, ":Tag", OracleDbType.NVarchar2, "%;" + tag + ";%");
-                AddParameter(command, ":Skip", OracleDbType.Int64, fromOffset - 1);
+                AddParameter(command, ":Ordering", OracleDbType.Int64, fromOffset);
                 AddParameter(command, ":Take", OracleDbType.Int64, take);
 
                 using (var reader = await command.ExecuteReaderAsync(cancellationToken))
@@ -233,9 +241,9 @@ END;";
                     while (await reader.ReadAsync(cancellationToken))
                     {
                         var persistent = ReadEvent(reader);
+                        var ordering = reader.GetInt64(OrderingIndex);
                         maxSequenceNr = Math.Max(maxSequenceNr, persistent.SequenceNr);
-                        callback(new ReplayedTaggedMessage(persistent, tag, fromOffset));
-                        fromOffset++;
+                        callback(new ReplayedTaggedMessage(persistent, tag, ordering));
                     }
 
                     return maxSequenceNr;
@@ -259,9 +267,10 @@ END;";
             using (var deleteCommand = GetCommand(connection, DeleteBatchSql))
             using (var highestSeqNrCommand = GetCommand(connection, HighestSequenceNrSql))
             {
+                AddParameter(highestSeqNrCommand, ":PersistenceId", OracleDbType.NVarchar2, persistenceId);
+
                 AddParameter(deleteCommand, ":PersistenceId", OracleDbType.NVarchar2, persistenceId);
                 AddParameter(deleteCommand, ":ToSequenceNr", OracleDbType.Int64, toSequenceNr);
-                AddParameter(highestSeqNrCommand, ":PersistenceId", OracleDbType.NVarchar2, persistenceId);
 
                 using (var tx = connection.BeginTransaction())
                 {

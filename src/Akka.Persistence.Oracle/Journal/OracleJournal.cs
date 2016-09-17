@@ -31,11 +31,12 @@ namespace Akka.Persistence.Oracle.Journal
                 timestampColumnName: "Timestamp",
                 isDeletedColumnName: "IsDeleted",
                 tagsColumnName: "Tags",
+                orderingColumnName: "Ordering",
                 timeout: config.GetTimeSpan("connection-timeout")), Context.System.Serialization, GetTimestampProvider(config.GetString("timestamp-provider")));
         }
 
         protected override DbConnection CreateDbConnection(string connectionString) => new OracleConnection(connectionString);
-
+        
         protected override string JournalConfigPath => OracleJournalSettings.ConfigPath;
         public override IJournalQueryExecutor QueryExecutor { get; }
     }
