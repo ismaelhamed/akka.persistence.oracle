@@ -124,3 +124,33 @@ CREATE TABLE SNAPSHOTSTORE (
 );
 ```
 
+### Preparing the test environment
+
+In order to run the tests, you must do the following things:
+
+1. Download and install Docker for Windows from: https://docs.docker.com/docker-for-windows/
+2. Get Oracle Express 11g R2 on Ubuntu 16.04 LTS from: https://hub.docker.com/r/wnameless/oracle-xe-11g/
+3. Run the following script to create the proper user and schema:
+```sql
+CREATE USER AKKA_PERSISTENCE_TEST IDENTIFIED BY akkadotnet; 
+GRANT CREATE SESSION TO AKKA_PERSISTENCE_TEST;
+GRANT CREATE TABLE TO AKKA_PERSISTENCE_TEST;
+GRANT CREATE VIEW TO AKKA_PERSISTENCE_TEST;
+GRANT CREATE SEQUENCE TO AKKA_PERSISTENCE_TEST;
+GRANT CREATE TRIGGER TO AKKA_PERSISTENCE_TEST;
+
+ALTER USER AKKA_PERSISTENCE_TEST QUOTA UNLIMITED ON USERS;
+ALTER USER AKKA_PERSISTENCE_TEST DEFAULT TABLESPACE USERS;
+```
+4. The default connection string uses the following credentials: `Data Source=192.168.99.100:1521/XE;User Id=AKKA_PERSISTENCE_TEST;Password=akkadotnet;`
+5. A custom app.config file can be used and needs to be placed in the same folder as the dll
+
+### Running the tests
+
+The Oracle tests are packaged and run as part of the "RunTests" and "All" build tasks. Run the following command from the PowerShell command line: 
+```powershell
+PS> .\build RunTests
+```
+
+
+

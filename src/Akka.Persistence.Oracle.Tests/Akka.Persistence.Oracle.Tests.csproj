@@ -161,7 +161,6 @@
     <None Include="packages.config">
       <SubType>Designer</SubType>
     </None>
-    <None Include="README.md" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Akka.Persistence.Oracle\Akka.Persistence.Oracle.csproj">

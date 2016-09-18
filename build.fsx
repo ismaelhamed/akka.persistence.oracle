@@ -16,11 +16,10 @@ cd __SOURCE_DIRECTORY__
 // Information about the project for Nuget and Assembly info files
 //--------------------------------------------------------------------------------
 
-
 let product = "Akka.NET"
-let authors = [ "Akka.NET Team" ]
-let copyright = "Copyright © 2013-2015 Akka.NET Team"
-let company = "Akka.NET Team"
+let authors = [ "Ismael Hamed" ]
+let copyright = "Copyright © 2016 Ismael Hamed"
+let company = ""
 let description = "Akka.NET is a port of the popular Java/Scala framework Akka to .NET"
 let tags = ["akka";"actors";"actor";"model";"Akka";"concurrency"]
 let configuration = "Release"
@@ -42,6 +41,7 @@ let isPreRelease = hasBuildParam "nugetprerelease"
 let release = if isPreRelease then ReleaseNotesHelper.ReleaseNotes.New(version, version + "-beta", parsedRelease.Notes) else parsedRelease
 
 printfn "Assembly version: %s\nNuget version; %s\n" release.AssemblyVersion release.NugetVersion
+
 //--------------------------------------------------------------------------------
 // Directories
 
@@ -82,7 +82,6 @@ Target "AssemblyInfo" <| fun _ ->
         Attribute.Version version
         Attribute.FileVersion version ] <| AssemblyInfoFileConfig(false)
 
-
 //--------------------------------------------------------------------------------
 // Build the solution
 
@@ -91,7 +90,6 @@ Target "Build" <| fun _ ->
     !! slnFile
     |> MSBuildRelease "" "Rebuild"
     |> ignore
-
 
 //--------------------------------------------------------------------------------
 // Copy the build output to bin directory
@@ -108,8 +106,6 @@ Target "CopyOutput" <| fun _ ->
     |> List.iter copyOutput
 
 Target "BuildRelease" DoNothing
-
-
 
 //--------------------------------------------------------------------------------
 // Tests targets
@@ -306,7 +302,6 @@ let publishNugetPackages _ =
             for package in symbolPackages do
                 publishPackage (getBuildParam "symbolspublishurl") (getBuildParam "symbolskey") 3 package
 
-
 Target "Nuget" <| fun _ -> 
     createNugetPackages()
     publishNugetPackages()
@@ -316,8 +311,6 @@ Target "CreateNuget" <| fun _ ->
 
 Target "PublishNuget" <| fun _ -> 
     publishNugetPackages()
-
-
 
 //--------------------------------------------------------------------------------
 // Help 
