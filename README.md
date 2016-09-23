@@ -1,4 +1,4 @@
-## Akka.Persistence.Oracle
+# Akka.Persistence.Oracle
 
 Akka.NET Persistence journal and snapshot store backed by Oracle ODP.NET
 
