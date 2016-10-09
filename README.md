@@ -2,6 +2,8 @@
 
 Akka.NET Persistence journal and snapshot store backed by Oracle ODP.NET
 
+![Build Status](https://img.shields.io/vso/build/ismaelhamed/0a339077-6d21-427c-9a48-13f723409ddd/6.svg?style=flat-square)  
+
 **WARNING: Akka.Persistence.Oracle plugin is still in beta and it's mechanics described bellow may be still subject to change**.
 
 ### Configuration
