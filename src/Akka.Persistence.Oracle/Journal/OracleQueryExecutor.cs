@@ -18,6 +18,9 @@ using Akka.Persistence.Sql.Common.Journal;
 using Akka.Persistence.Sql.Common.Queries;
 using Oracle.ManagedDataAccess.Client;
 
+#pragma warning disable 618
+#pragma warning disable 612
+
 namespace Akka.Persistence.Oracle.Journal
 {
     public class OracleQueryExecutor : AbstractQueryExecutor
@@ -67,13 +70,18 @@ VALUES (:PersistenceId, :SequenceNr)";
             ByPersistenceIdSql = $@"
 SELECT {allEventColumnNames}
 FROM {Configuration.FullJournalTableName} e
-WHERE e.{Configuration.PersistenceIdColumnName} = :PersistenceId AND e.{Configuration.SequenceNrColumnName} BETWEEN :FromSequenceNr AND :ToSequenceNr";
+WHERE e.{Configuration.PersistenceIdColumnName} = :PersistenceId AND e.{Configuration.SequenceNrColumnName} BETWEEN :FromSequenceNr AND :ToSequenceNr
+ORDER BY e.{Configuration.SequenceNrColumnName} ASC";
 
             ByTagSql = $@"
-SELECT {allEventColumnNames}, e.{Configuration.OrderingColumnName} AS Ordering
-FROM { Configuration.FullJournalTableName} e
-WHERE e.{Configuration.OrderingColumnName} > :Ordering AND e.{Configuration.TagsColumnName} LIKE :Tag
-ORDER BY {Configuration.OrderingColumnName} ASC";
+SELECT * 
+FROM (
+    SELECT {allEventColumnNames}, e.{Configuration.OrderingColumnName} AS Ordering
+    FROM { Configuration.FullJournalTableName} e
+    WHERE e.{Configuration.OrderingColumnName} > :Ordering AND e.{Configuration.TagsColumnName} LIKE :Tag
+    ORDER BY {Configuration.OrderingColumnName} ASC
+)
+WHERE ROWNUM <= :Take";
 
             InsertEventSql = $@"
 INSERT INTO {Configuration.FullJournalTableName} (
@@ -97,7 +105,7 @@ BEGIN
     IF table_count = 0 THEN 
         EXECUTE IMMEDIATE '
             CREATE TABLE {configuration.FullJournalTableName} (
-                {configuration.OrderingColumnName} INTEGER NOT NULL,
+                {configuration.OrderingColumnName} NUMBER(19,0) NOT NULL,
                 {configuration.PersistenceIdColumnName} NVARCHAR2(255) NOT NULL,
                 {configuration.SequenceNrColumnName} NUMBER(19,0) NOT NULL,
                 {configuration.TimestampColumnName} NUMBER(19,0) NOT NULL,
@@ -109,14 +117,17 @@ BEGIN
             )';
 
         EXECUTE IMMEDIATE '
-            CREATE SEQUENCE {configuration.JournalEventsTableName}_SEQ
+            CREATE SEQUENCE {configuration.FullJournalTableName}_SEQ
                 START WITH 1
                 INCREMENT BY 1
-                NOCACHE
+                CACHE 1000
+                ORDER
+                NOCYCLE
+                NOMAXVALUE
             ';
 
         EXECUTE IMMEDIATE '
-            CREATE OR REPLACE TRIGGER {configuration.JournalEventsTableName}_TRG 
+            CREATE OR REPLACE TRIGGER {configuration.FullJournalTableName}_TRG 
              BEFORE INSERT ON {configuration.JournalEventsTableName} 
              FOR EACH ROW
              BEGIN
@@ -124,7 +135,7 @@ BEGIN
              END;
             ';
 
-        EXECUTE IMMEDIATE 'ALTER TRIGGER {configuration.JournalEventsTableName}_TRG ENABLE';
+        EXECUTE IMMEDIATE 'ALTER TRIGGER {configuration.FullJournalTableName}_TRG ENABLE';
 
         EXECUTE IMMEDIATE 'CREATE INDEX IX_{configuration.JournalEventsTableName}_{configuration.SequenceNrColumnName} ON {configuration.FullJournalTableName}({configuration.SequenceNrColumnName})';
         EXECUTE IMMEDIATE 'CREATE INDEX IX_{configuration.JournalEventsTableName}_{configuration.TimestampColumnName} ON {configuration.FullJournalTableName}({configuration.TimestampColumnName})';       
@@ -231,8 +242,8 @@ END;";
             {
                 var take = Math.Min(toOffset - fromOffset, max);
 
-                AddParameter(command, ":Tag", OracleDbType.NVarchar2, "%;" + tag + ";%");
                 AddParameter(command, ":Ordering", OracleDbType.Int64, fromOffset);
+                AddParameter(command, ":Tag", OracleDbType.NVarchar2, "%;" + tag + ";%");
                 AddParameter(command, ":Take", OracleDbType.Int64, take);
 
                 using (var reader = await command.ExecuteReaderAsync(cancellationToken))
