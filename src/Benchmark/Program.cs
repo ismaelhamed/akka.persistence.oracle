@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Akka.Actor;
 using Akka.Configuration;
+using Akka.Pattern;
 
 namespace Benchmark
 {
@@ -38,7 +39,7 @@ namespace Benchmark
             }");
 
         public const int ActorCount = 1000;
-        public const int MessagesPerActor = 10;
+        public const int MessagesPerActor = 100;
 
         static void Main(string[] args)
         {
@@ -84,11 +85,11 @@ namespace Benchmark
 
                 Console.WriteLine($"{ActorCount} actors stored {MessagesPerActor} events each in {elapsed / 1000.0} sec. Average: {ActorCount * MessagesPerActor * 1000.0 / elapsed} events/sec");
 
-                //foreach (Task<Finished> task in finished)
-                //{
-                //    if (!task.IsCompleted || task.Result.State != MessagesPerActor)
-                //        throw new IllegalStateException("Actor's state was invalid");
-                //}
+                foreach (Task<Finished> task in finished)
+                {
+                    if (!task.IsCompleted || task.Result.State != MessagesPerActor)
+                        throw new IllegalStateException("Actor's state was invalid");
+                }
             }
 
             Console.WriteLine("Press Enter to exit...");

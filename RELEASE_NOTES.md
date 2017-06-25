@@ -1,3 +1,8 @@
+#### 1.2.1 June 25 2017
+
+#### 1.2.0 May 22 2017
+Added support for the new BatchingJournal + support for Akka.NET 1.2
+
 #### 1.1.2 September 18 2016
 Updated tag ordering and bumped up version to 1.1.2-stable
 
