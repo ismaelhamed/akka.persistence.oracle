@@ -6,15 +6,17 @@
 //-----------------------------------------------------------------------
 
 using Akka.Configuration;
+using Akka.Persistence.Query;
 using Akka.Persistence.Query.Sql;
-using Akka.Persistence.Sql.TestKit;
+using Akka.Persistence.TCK.Query;
 using Xunit.Abstractions;
 
 namespace Akka.Persistence.Oracle.Tests.Query
 {
-    public class OracleAllPersistenceIdsSpec : AllPersistenceIdsSpec
+    public class OraclePersistenceIdsSpec : PersistenceIdsSpec
     {
         private static Config Config => ConfigurationFactory.ParseString(@"
+            akka.loglevel = INFO
             akka.test.single-expect-default = 10s
             akka.persistence {
                 publish-plugin-commands = on
@@ -32,9 +34,11 @@ namespace Akka.Persistence.Oracle.Tests.Query
                 }
             }").WithFallback(SqlReadJournal.DefaultConfiguration());
 
-        public OracleAllPersistenceIdsSpec(ITestOutputHelper output)
-            : base(Config, output)
-        { }
+        public OraclePersistenceIdsSpec(ITestOutputHelper output)
+            : base(Config, nameof(OraclePersistenceIdsSpec), output)
+        {
+            ReadJournal = Sys.ReadJournalFor<SqlReadJournal>(SqlReadJournal.Identifier);
+        }
 
         protected override void Dispose(bool disposing)
         {

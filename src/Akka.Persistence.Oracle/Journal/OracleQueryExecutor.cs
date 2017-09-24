@@ -6,7 +6,6 @@
 //-----------------------------------------------------------------------
 
 using System;
-using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Data.Common;
 using System.Linq;
@@ -15,11 +14,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using Akka.Actor;
 using Akka.Persistence.Sql.Common.Journal;
-using Akka.Persistence.Sql.Common.Queries;
+using Akka.Serialization;
+using Akka.Util;
 using Oracle.ManagedDataAccess.Client;
-
-#pragma warning disable 618
-#pragma warning disable 612
 
 namespace Akka.Persistence.Oracle.Journal
 {
@@ -44,7 +41,8 @@ namespace Akka.Persistence.Oracle.Journal
                 e.{Configuration.TimestampColumnName} AS Timestamp, 
                 e.{Configuration.IsDeletedColumnName} AS IsDeleted, 
                 e.{Configuration.ManifestColumnName} AS Manifest, 
-                e.{Configuration.PayloadColumnName} AS Payload";
+                e.{Configuration.PayloadColumnName} AS Payload,
+                e.{Configuration.SerializerIdColumnName} AS SerializerId";
 
             AllPersistenceIdsSql = $@"
 SELECT DISTINCT e.{Configuration.PersistenceIdColumnName} AS PersistenceId 
@@ -91,8 +89,9 @@ INSERT INTO {Configuration.FullJournalTableName} (
     {Configuration.IsDeletedColumnName},
     {Configuration.ManifestColumnName},
     {Configuration.PayloadColumnName},
-    {Configuration.TagsColumnName}
-) VALUES (:PersistenceId, :SequenceNr, :Timestamp, :IsDeleted, :Manifest, :Payload, :Tag)";
+    {Configuration.TagsColumnName},
+    {Configuration.SerializerIdColumnName}
+) VALUES (:PersistenceId, :SequenceNr, :Timestamp, :IsDeleted, :Manifest, :Payload, :Tag, :SerializerId)";
 
             CreateEventsJournalSql = $@"
 DECLARE
@@ -113,6 +112,7 @@ BEGIN
                 {configuration.ManifestColumnName} NVARCHAR2(500) NOT NULL,
                 {configuration.PayloadColumnName} BLOB NOT NULL,
                 {configuration.TagsColumnName} NVARCHAR2(100) NULL,
+                {configuration.SerializerIdColumnName} NUMBER(10,0) NULL,
                 CONSTRAINT QU_{configuration.JournalEventsTableName} UNIQUE({configuration.PersistenceIdColumnName}, {configuration.SequenceNrColumnName})
             )';
 
@@ -162,7 +162,7 @@ BEGIN
 END;";
         }
 
-        protected override DbCommand CreateCommand(DbConnection connection) => new OracleCommand { Connection = (OracleConnection)connection };
+        protected override DbCommand CreateCommand(DbConnection connection) => new OracleCommand { Connection = (OracleConnection)connection, BindByName = true };
 
         private static void AddParameter(DbCommand command, string parameterName, OracleDbType parameterType, object value)
         {
@@ -180,20 +180,43 @@ END;";
             var sequenceNr = reader.GetInt64(SequenceNrIndex);
             var timestamp = reader.GetInt64(TimestampIndex);
             var isDeleted = Convert.ToBoolean(reader.GetInt16(IsDeletedIndex));
-            var manifest = reader.GetString(ManifestIndex);
+            var manifest = reader.GetString(ManifestIndex).Trim(); // HACK
             var payload = reader[PayloadIndex];
 
-            var type = Type.GetType(manifest, true);
-            var serializer = Serialization.FindSerializerForType(type);
-            var deserialized = serializer.FromBinary((byte[])payload, type);
+            object deserialized;
+            if (reader.IsDBNull(SerializerIdIndex))
+            {
+                var type = Type.GetType(manifest, true);
+                var deserializer = Serialization.FindSerializerForType(type, Configuration.DefaultSerializer);
+                deserialized = deserializer.FromBinary((byte[])payload, type);
+            }
+            else
+            {
+                var serializerId = reader.GetInt32(SerializerIdIndex);
+                deserialized = Serialization.Deserialize((byte[])payload, serializerId, manifest);
+            }
 
-            return new Persistent(deserialized, sequenceNr, persistenceId, manifest, isDeleted, ActorRefs.NoSender, null); // TODO
+            return new Persistent(deserialized, sequenceNr, persistenceId, manifest, isDeleted, ActorRefs.NoSender);
         }
 
         protected override void WriteEvent(DbCommand command, IPersistentRepresentation e, IImmutableSet<string> tags)
         {
-            var manifest = string.IsNullOrEmpty(e.Manifest) ? e.Payload.GetType().QualifiedTypeName() : e.Manifest;
-            var serializer = Serialization.FindSerializerFor(e.Payload);
+            var payloadType = e.Payload.GetType();
+            var serializer = Serialization.FindSerializerForType(payloadType, Configuration.DefaultSerializer);
+
+            var manifest = " "; // HACK
+            if (serializer is SerializerWithStringManifest stringManifest)
+            {
+                manifest = stringManifest.Manifest(e.Payload);
+            }
+            else
+            {
+                if (serializer.IncludeManifest)
+                {
+                    manifest = payloadType.TypeQualifiedName();
+                }
+            }
+
             var binary = serializer.ToBinary(e.Payload);
 
             AddParameter(command, ":PersistenceId", OracleDbType.NVarchar2, e.PersistenceId);
@@ -202,6 +225,7 @@ END;";
             AddParameter(command, ":IsDeleted", OracleDbType.Int16, e.IsDeleted);
             AddParameter(command, ":Manifest", OracleDbType.NVarchar2, manifest);
             AddParameter(command, ":Payload", OracleDbType.Blob, binary);
+            AddParameter(command, ":SerializerId", OracleDbType.Int32, serializer.Identifier);
 
             if (tags.Count != 0)
             {
@@ -210,10 +234,10 @@ END;";
                 {
                     tagBuilder.Append(tag).Append(';');
                 }
-
                 AddParameter(command, ":Tag", OracleDbType.NVarchar2, tagBuilder.ToString());
             }
-            else AddParameter(command, ":Tag", OracleDbType.NVarchar2, DBNull.Value);
+            else
+                AddParameter(command, ":Tag", OracleDbType.NVarchar2, DBNull.Value);
         }
 
         public override async Task SelectByPersistenceIdAsync(DbConnection connection, CancellationToken cancellationToken, string persistenceId, long fromSequenceNr, long toSequenceNr, long max, Action<IPersistentRepresentation> callback)
@@ -309,69 +333,6 @@ END;";
                     else tx.Commit();
                 }
             }
-        }
-
-        public override async Task SelectEventsAsync(DbConnection connection, CancellationToken cancellationToken, IEnumerable<IHint> hints, Action<IPersistentRepresentation> callback)
-        {
-            using (var command = GetCommand(connection, QueryEventsSql))
-            {
-                command.CommandText += string.Join(" AND ", hints.Select(h => HintToSql(h, command)));
-                command.CommandText += $" ORDER BY {Configuration.PersistenceIdColumnName}, {Configuration.SequenceNrColumnName}";
-
-                using (var reader = await command.ExecuteReaderAsync(cancellationToken))
-                {
-                    while (await reader.ReadAsync(cancellationToken))
-                    {
-                        var persistent = ReadEvent(reader);
-                        callback(persistent);
-                    }
-                }
-            }
-        }
-
-        protected override string HintToSql(IHint hint, DbCommand command)
-        {
-            if (hint is TimestampRange)
-            {
-                var range = (TimestampRange)hint;
-                var sb = new StringBuilder();
-
-                if (range.From.HasValue)
-                {
-                    sb.Append(" e.").Append(Configuration.TimestampColumnName).Append(" >= :TimestampFrom ");
-                    AddParameter(command, ":TimestampFrom", OracleDbType.Int64, range.From.Value);
-                }
-                if (range.From.HasValue && range.To.HasValue) sb.Append("AND");
-                if (range.To.HasValue)
-                {
-                    sb.Append(" e.").Append(Configuration.TimestampColumnName).Append(" < :TimestampTo ");
-                    AddParameter(command, ":TimestampTo", OracleDbType.Int64, range.To.Value);
-                }
-
-                return sb.ToString();
-            }
-            if (hint is PersistenceIdRange)
-            {
-                var range = (PersistenceIdRange)hint;
-                var sb = new StringBuilder(" e.").Append(Configuration.PersistenceIdColumnName).Append(" IN (");
-                var i = 0;
-                foreach (var persistenceId in range.PersistenceIds)
-                {
-                    var paramName = ":Pid" + (i++);
-                    sb.Append(paramName).Append(',');
-                    AddParameter(command, paramName, OracleDbType.NVarchar2, persistenceId);
-                }
-                return range.PersistenceIds.Count == 0
-                    ? string.Empty
-                    : sb.Remove(sb.Length - 1, 1).Append(')').ToString();
-            }
-            else if (hint is WithManifest)
-            {
-                var manifest = (WithManifest)hint;
-                AddParameter(command, ":Manifest", OracleDbType.NVarchar2, manifest.Manifest);
-                return $" e.{Configuration.ManifestColumnName} = :Manifest";
-            }
-            else throw new NotSupportedException($"Oracle journal doesn't support query with hint [{hint.GetType()}]");
         }
     }
 }

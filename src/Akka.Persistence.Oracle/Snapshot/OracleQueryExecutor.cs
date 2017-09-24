@@ -6,10 +6,13 @@
 //-----------------------------------------------------------------------
 
 using System;
+using System.Data;
 using System.Data.Common;
 using System.Threading;
 using System.Threading.Tasks;
 using Akka.Persistence.Sql.Common.Snapshot;
+using Akka.Serialization;
+using Akka.Util;
 using Oracle.ManagedDataAccess.Client;
 
 namespace Akka.Persistence.Oracle.Snapshot
@@ -30,7 +33,8 @@ SELECT {Configuration.PersistenceIdColumnName},
     {Configuration.SequenceNrColumnName}, 
     {Configuration.TimestampColumnName}, 
     {Configuration.ManifestColumnName}, 
-    {Configuration.PayloadColumnName}   
+    {Configuration.PayloadColumnName},
+    {Configuration.SerializerIdColumnName}
 FROM {Configuration.FullSnapshotTableName} 
 WHERE {Configuration.PersistenceIdColumnName} = :PersistenceId AND {Configuration.SequenceNrColumnName} <= :SequenceNr AND {Configuration.TimestampColumnName} <= :Timestamp
 ORDER BY {Configuration.SequenceNrColumnName} DESC";
@@ -46,10 +50,14 @@ WHERE {Configuration.PersistenceIdColumnName} = :PersistenceId AND {Configuratio
             InsertSnapshotSql = $@"
 MERGE INTO {configuration.FullSnapshotTableName} USING DUAL ON ({configuration.PersistenceIdColumnName} = :PersistenceId AND {configuration.SequenceNrColumnName} = :SequenceNr)
 WHEN MATCHED THEN 
-    UPDATE SET {configuration.TimestampColumnName} = :Timestamp, {configuration.PayloadColumnName} = :Payload 
+    UPDATE SET 
+        {configuration.TimestampColumnName} = :Timestamp, 
+        {configuration.ManifestColumnName} = :Manifest,
+        {configuration.PayloadColumnName} = :Payload, 
+        {configuration.SerializerIdColumnName} = :SerializerId
 WHEN NOT MATCHED THEN 
-    INSERT ({configuration.PersistenceIdColumnName}, {configuration.SequenceNrColumnName}, {configuration.TimestampColumnName}, {configuration.ManifestColumnName}, {configuration.PayloadColumnName}) 
-    VALUES (:PersistenceId, :SequenceNr, :Timestamp, :Manifest, :Payload)";
+    INSERT ({configuration.PersistenceIdColumnName}, {configuration.SequenceNrColumnName}, {configuration.TimestampColumnName}, {configuration.ManifestColumnName}, {configuration.PayloadColumnName}, {configuration.SerializerIdColumnName}) 
+    VALUES (:PersistenceId, :SequenceNr, :Timestamp, :Manifest, :Payload, :SerializerId)";
 
             CreateSnapshotTableSql = $@"
 DECLARE
@@ -67,6 +75,7 @@ BEGIN
               {configuration.TimestampColumnName} TIMESTAMP(7) NOT NULL,
               {configuration.ManifestColumnName} NVARCHAR2(500) NOT NULL,
               {configuration.PayloadColumnName} BLOB NOT NULL,
+              {configuration.SerializerIdColumnName} NUMBER(10,0) NULL,
               CONSTRAINT PK_{configuration.SnapshotTableName} PRIMARY KEY ({configuration.PersistenceIdColumnName}, {configuration.SequenceNrColumnName})
             )'
         );
@@ -76,7 +85,7 @@ BEGIN
 END;";
         }
 
-        protected override DbCommand CreateCommand(DbConnection connection) => new OracleCommand { Connection = (OracleConnection)connection/*, BindByName = true*/ };
+        protected override DbCommand CreateCommand(DbConnection connection) => new OracleCommand { Connection = (OracleConnection)connection, BindByName = true };
 
         private static void AddParameter(DbCommand command, string parameterName, OracleDbType parameterType, object value)
         {
@@ -98,27 +107,26 @@ END;";
             var binary = serializer.ToBinary(snapshot);
             AddParameter(command, ":Payload", OracleDbType.Blob, binary);
         }
-        
-        protected override void SetManifestParameter(Type snapshotType, DbCommand command) => AddParameter(command, ":Manifest", OracleDbType.NVarchar2, snapshotType.QualifiedTypeName());
 
-        public override async Task InsertAsync(DbConnection connection, CancellationToken cancellationToken, object snapshot, SnapshotMetadata metadata)
+        protected override void SetManifestParameters(object snapshot, DbCommand command)
         {
-            using (var command = (OracleCommand)GetCommand(connection, InsertSnapshotSql))
-            using (var tx = ((OracleConnection)connection).BeginTransaction())
+            var snapshotType = snapshot.GetType();
+            var serializer = Serialization.FindSerializerForType(snapshotType, Configuration.DefaultSerializer);
+
+            var manifest = " "; // HACK
+            if (serializer is SerializerWithStringManifest stringManifest)
             {
-                command.Transaction = tx;
-                command.BindByName = true;
-
-                SetPersistenceIdParameter(metadata.PersistenceId, command);
-                SetSequenceNrParameter(metadata.SequenceNr, command);
-                SetTimestampParameter(metadata.Timestamp, command);
-                SetManifestParameter(snapshot.GetType(), command);
-                SetPayloadParameter(snapshot, command);
-
-                await command.ExecuteNonQueryAsync(cancellationToken);
-
-                tx.Commit();
+                manifest = stringManifest.Manifest(snapshot);
             }
+            else
+            {
+                if (serializer.IncludeManifest)
+                {
+                    manifest = snapshotType.TypeQualifiedName();
+                }
+            }
+            AddParameter(command, ":Manifest", DbType.String, manifest);
+            AddParameter(command, ":SerializerId", DbType.Int32, serializer.Identifier);
         }
 
         public override async Task DeleteAsync(DbConnection connection, CancellationToken cancellationToken, string persistenceId, long sequenceNr, DateTime? timestamp)
@@ -144,6 +152,39 @@ END;";
 
                 tx.Commit();
             }
+        }
+
+        protected override SelectedSnapshot ReadSnapshot(DbDataReader reader)
+        {
+            var persistenceId = reader.GetString(0);
+            var sequenceNr = reader.GetInt64(1);
+            var timestamp = reader.GetDateTime(2);
+
+            var metadata = new SnapshotMetadata(persistenceId, sequenceNr, timestamp);
+            var snapshot = GetSnapshot(reader);
+
+            return new SelectedSnapshot(metadata, snapshot);
+        }
+
+        protected new object GetSnapshot(DbDataReader reader)
+        {
+            var manifest = reader.GetString(3).Trim(); // HACK
+            var binary = (byte[])reader[4];
+
+            object obj;
+            if (reader.IsDBNull(5))
+            {
+                var type = Type.GetType(manifest, true);
+                var serializer = Serialization.FindSerializerForType(type, Configuration.DefaultSerializer);
+                obj = serializer.FromBinary(binary, type);
+            }
+            else
+            {
+                var serializerId = reader.GetInt32(5);
+                obj = Serialization.Deserialize(binary, serializerId, manifest);
+            }
+
+            return obj;
         }
     }
 }

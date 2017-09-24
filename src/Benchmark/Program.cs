@@ -14,7 +14,7 @@ namespace Benchmark
         // by default we're checking against in-memory journal
         private static readonly Config Config = ConfigurationFactory.ParseString(@"
             akka {
-                #loglevel = DEBUG
+                loglevel = INFO
                 suppress-json-serializer-warning = true
                 persistence.journal {
                     plugin = ""akka.persistence.journal.oracle""
@@ -41,7 +41,7 @@ namespace Benchmark
         public const int ActorCount = 1000;
         public const int MessagesPerActor = 100;
 
-        static void Main(string[] args)
+        private static void Main(string[] args)
         {
             using (var system = ActorSystem.Create("persistent-benchmark", Config.WithFallback(ConfigurationFactory.Default())))
             {
@@ -50,7 +50,7 @@ namespace Benchmark
                 var stopwatch = new Stopwatch();
 
                 var actors = new IActorRef[ActorCount];
-                for (int i = 0; i < ActorCount; i++)
+                for (var i = 0; i < ActorCount; i++)
                 {
                     var pid = "a-" + i;
                     actors[i] = system.ActorOf(Props.Create(() => new PerformanceTestActor(pid)));
@@ -66,14 +66,14 @@ namespace Benchmark
 
                 stopwatch.Start();
 
-                for (int i = 0; i < MessagesPerActor; i++)
-                    for (int j = 0; j < ActorCount; j++)
+                for (var i = 0; i < MessagesPerActor; i++)
+                    for (var j = 0; j < ActorCount; j++)
                     {
                         actors[j].Tell(new Store(1));
                     }
 
                 var finished = new Task[ActorCount];
-                for (int i = 0; i < ActorCount; i++)
+                for (var i = 0; i < ActorCount; i++)
                 {
                     finished[i] = actors[i].Ask<Finished>(Finish.Instance);
                 }
@@ -85,10 +85,9 @@ namespace Benchmark
 
                 Console.WriteLine($"{ActorCount} actors stored {MessagesPerActor} events each in {elapsed / 1000.0} sec. Average: {ActorCount * MessagesPerActor * 1000.0 / elapsed} events/sec");
 
-                foreach (Task<Finished> task in finished)
+                if (finished.Cast<Task<Finished>>().Any(task => !task.IsCompleted || task.Result.State != MessagesPerActor))
                 {
-                    if (!task.IsCompleted || task.Result.State != MessagesPerActor)
-                        throw new IllegalStateException("Actor's state was invalid");
+                    throw new IllegalStateException("Actor's state was invalid");
                 }
             }
 

@@ -14,6 +14,7 @@ using Akka.Actor;
 using Akka.Configuration;
 using Akka.Persistence.Journal;
 using Akka.Persistence.Sql.Common.Journal;
+using Akka.Serialization;
 using Akka.Util;
 using Oracle.ManagedDataAccess.Client;
 
@@ -21,6 +22,8 @@ namespace Akka.Persistence.Oracle.Journal
 {
     public class BatchingOracleJournal : BatchingSqlJournal<OracleConnection, OracleCommand>
     {
+        private readonly Akka.Serialization.Serialization serialization;
+
         protected override string AllPersistenceIdsSql { get; }
         protected override string HighestSequenceNrSql { get; }
         protected override string DeleteBatchSql { get; }
@@ -29,13 +32,14 @@ namespace Akka.Persistence.Oracle.Journal
         protected override string ByTagSql { get; }
         protected override string InsertEventSql { get; }
 
-        public BatchingOracleJournal(Config config) 
+        public BatchingOracleJournal(Config config)
             : this(new BatchingOracleJournalSetup(config))
         { }
 
         public BatchingOracleJournal(BatchingSqlJournalSetup setup)
             : base(setup)
         {
+            serialization = Context.System.Serialization;
             var conventions = Setup.NamingConventions;
 
             var allEventColumnNames = $@"
@@ -44,7 +48,8 @@ namespace Akka.Persistence.Oracle.Journal
                 e.{conventions.TimestampColumnName} AS Timestamp, 
                 e.{conventions.IsDeletedColumnName} AS IsDeleted, 
                 e.{conventions.ManifestColumnName} AS Manifest, 
-                e.{conventions.PayloadColumnName} AS Payload";
+                e.{conventions.PayloadColumnName} AS Payload, 
+                e.{conventions.SerializerIdColumnName} AS SerializerId";
 
             AllPersistenceIdsSql = $@"
 SELECT DISTINCT e.{conventions.PersistenceIdColumnName} AS PersistenceId 
@@ -91,8 +96,9 @@ INSERT INTO {conventions.FullJournalTableName} (
     {conventions.IsDeletedColumnName},
     {conventions.ManifestColumnName},
     {conventions.PayloadColumnName},
-    {conventions.TagsColumnName}
-) VALUES (:PersistenceId, :SequenceNr, :Timestamp, :IsDeleted, :Manifest, :Payload, :Tag)";
+    {conventions.TagsColumnName},
+    {conventions.SerializerIdColumnName}
+) VALUES (:PersistenceId, :SequenceNr, :Timestamp, :IsDeleted, :Manifest, :Payload, :Tag, :SerializerId)";
 
             Initializers = ImmutableDictionary.CreateRange(new[]
             {
@@ -115,6 +121,7 @@ BEGIN
                 {conventions.ManifestColumnName} NVARCHAR2(500) NOT NULL,
                 {conventions.PayloadColumnName} BLOB NOT NULL,
                 {conventions.TagsColumnName} NVARCHAR2(100) NULL,
+                {conventions.SerializerIdColumnName} NUMBER(10,0) NULL,
                 CONSTRAINT QU_{conventions.JournalEventsTableName} UNIQUE({conventions.PersistenceIdColumnName}, {conventions.SequenceNrColumnName})
             )';
 
@@ -182,12 +189,21 @@ END;")
             var persistenceId = reader.GetString(PersistenceIdIndex);
             var sequenceNr = reader.GetInt64(SequenceNrIndex);
             var isDeleted = Convert.ToBoolean(reader.GetInt16(IsDeletedIndex));
-            var manifest = reader.GetString(ManifestIndex);
+            var manifest = reader.GetString(ManifestIndex).Trim(); // HACK
             var payload = reader[PayloadIndex];
 
-            var type = Type.GetType(manifest, true);
-            var deserializer = Context.System.Serialization.FindSerializerFor(type);
-            var deserialized = deserializer.FromBinary((byte[])payload, type);
+            object deserialized;
+            if (reader.IsDBNull(SerializerIdIndex))
+            {
+                var type = Type.GetType(manifest, true);
+                var deserializer = serialization.FindSerializerForType(type, Setup.DefaultSerializer);
+                deserialized = deserializer.FromBinary((byte[])payload, type);
+            }
+            else
+            {
+                var serializerId = reader.GetInt32(SerializerIdIndex);
+                deserialized = serialization.Deserialize((byte[])payload, serializerId, manifest);
+            }
 
             return new Persistent(deserialized, sequenceNr, persistenceId, manifest, isDeleted, ActorRefs.NoSender);
         }
@@ -195,8 +211,21 @@ END;")
         protected override void WriteEvent(OracleCommand command, IPersistentRepresentation persistent, string tags = "")
         {
             var payloadType = persistent.Payload.GetType();
-            var manifest = string.IsNullOrEmpty(persistent.Manifest) ? payloadType.TypeQualifiedName() : persistent.Manifest;
-            var serializer = Context.System.Serialization.FindSerializerFor(payloadType);
+            var serializer = serialization.FindSerializerForType(payloadType, Setup.DefaultSerializer);
+
+            var manifest = " "; // HACK
+            if (serializer is SerializerWithStringManifest stringManifest)
+            {
+                manifest = stringManifest.Manifest(persistent.Payload);
+            }
+            else
+            {
+                if (serializer.IncludeManifest)
+                {
+                    manifest = payloadType.TypeQualifiedName();
+                }
+            }
+
             var binary = serializer.ToBinary(persistent.Payload);
 
             AddParameter(command, ":PersistenceId", OracleDbType.NVarchar2, persistent.PersistenceId);
@@ -206,6 +235,7 @@ END;")
             AddParameter(command, ":Manifest", OracleDbType.NVarchar2, manifest);
             AddParameter(command, ":Payload", OracleDbType.Blob, binary);
             AddParameter(command, ":Tag", OracleDbType.NVarchar2, tags);
+            AddParameter(command, ":SerializerId", OracleDbType.Int32, serializer.Identifier);
         }
 
         protected override async Task<long> ReadHighestSequenceNr(string persistenceId, OracleCommand command)

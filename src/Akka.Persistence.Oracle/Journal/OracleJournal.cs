@@ -32,7 +32,11 @@ namespace Akka.Persistence.Oracle.Journal
                 isDeletedColumnName: "IsDeleted",
                 tagsColumnName: "Tags",
                 orderingColumnName: "Ordering",
-                timeout: config.GetTimeSpan("connection-timeout")), Context.System.Serialization, GetTimestampProvider(config.GetString("timestamp-provider")));
+                serializerIdColumnName: "SerializerId",
+                timeout: config.GetTimeSpan("connection-timeout"),
+                defaultSerializer: config.GetString("serializer")), 
+                    Context.System.Serialization, 
+                    GetTimestampProvider(config.GetString("timestamp-provider")));
         }
 
         protected override DbConnection CreateDbConnection(string connectionString) => new OracleConnection(connectionString);

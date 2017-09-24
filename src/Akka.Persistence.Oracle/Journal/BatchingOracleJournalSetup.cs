@@ -27,11 +27,13 @@ namespace Akka.Persistence.Oracle.Journal
                 isDeletedColumnName: "IsDeleted",
                 tagsColumnName: "Tags",
                 orderingColumnName: "Ordering",
-                timeout: config.GetTimeSpan("connection-timeout", TimeSpan.FromSeconds(30))))
+                serializerIdColumnName: "SerializerId",
+                timeout: config.GetTimeSpan("connection-timeout", TimeSpan.FromSeconds(30)),
+                defaultSerializer: config.GetString("serializer")))
         { }
 
-        public BatchingOracleJournalSetup(string connectionString, int maxConcurrentOperations, int maxBatchSize, int maxBufferSize, bool autoInitialize, TimeSpan connectionTimeout, IsolationLevel isolationLevel, CircuitBreakerSettings circuitBreakerSettings, ReplayFilterSettings replayFilterSettings, QueryConfiguration namingConventions)
-            : base(connectionString, maxConcurrentOperations, maxBatchSize, maxBufferSize, autoInitialize, connectionTimeout, isolationLevel, circuitBreakerSettings, replayFilterSettings, namingConventions)
+        public BatchingOracleJournalSetup(string connectionString, int maxConcurrentOperations, int maxBatchSize, int maxBufferSize, bool autoInitialize, TimeSpan connectionTimeout, IsolationLevel isolationLevel, CircuitBreakerSettings circuitBreakerSettings, ReplayFilterSettings replayFilterSettings, QueryConfiguration namingConventions, string defaultSerializer)
+            : base(connectionString, maxConcurrentOperations, maxBatchSize, maxBufferSize, autoInitialize, connectionTimeout, isolationLevel, circuitBreakerSettings, replayFilterSettings, namingConventions, defaultSerializer)
         { }
     }
 }

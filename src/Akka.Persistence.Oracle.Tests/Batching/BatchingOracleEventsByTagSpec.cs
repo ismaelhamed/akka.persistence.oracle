@@ -6,8 +6,9 @@
 //-----------------------------------------------------------------------
 
 using Akka.Configuration;
+using Akka.Persistence.Query;
 using Akka.Persistence.Query.Sql;
-using Akka.Persistence.Sql.TestKit;
+using Akka.Persistence.TCK.Query;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -17,6 +18,7 @@ namespace Akka.Persistence.Oracle.Tests.Batching
     public class BatchingOracleEventsByTagSpec : EventsByTagSpec
     {
         public static Config Config => ConfigurationFactory.ParseString(@"
+            akka.loglevel = INFO
             akka.test.single-expect-default = 10s
             akka.persistence {
                 publish-plugin-commands = on
@@ -24,7 +26,7 @@ namespace Akka.Persistence.Oracle.Tests.Batching
                     plugin = ""akka.persistence.journal.oracle""
                     oracle {
                         event-adapters {
-                            color-tagger  = ""Akka.Persistence.Sql.TestKit.ColorTagger, Akka.Persistence.Sql.TestKit""
+                            color-tagger  = ""Akka.Persistence.TCK.Query.ColorFruitTagger, Akka.Persistence.TCK""
                         }
                         event-adapter-bindings = {
                             ""System.String"" = color-tagger
@@ -39,9 +41,11 @@ namespace Akka.Persistence.Oracle.Tests.Batching
                 }
             }").WithFallback(SqlReadJournal.DefaultConfiguration());
 
-        public BatchingOracleEventsByTagSpec(ITestOutputHelper output) 
-            : base(Config, output)
-        { }
+        public BatchingOracleEventsByTagSpec(ITestOutputHelper output)
+            : base(Config, nameof(BatchingOracleEventsByTagSpec), output)
+        {
+            ReadJournal = Sys.ReadJournalFor<SqlReadJournal>(SqlReadJournal.Identifier);
+        }
 
         protected override void Dispose(bool disposing)
         {

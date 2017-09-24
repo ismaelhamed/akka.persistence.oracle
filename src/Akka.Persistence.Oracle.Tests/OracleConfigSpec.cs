@@ -21,7 +21,7 @@ namespace Akka.Persistence.Oracle.Tests
             Assert.Equal(TimeSpan.FromSeconds(30), config.GetTimeSpan("connection-timeout"));
             Assert.Equal("EVENTJOURNAL", config.GetString("table-name"));
             Assert.Equal("METADATA", config.GetString("metadata-table-name"));
-            Assert.Equal(false, config.GetBoolean("auto-initialize"));
+            Assert.False(config.GetBoolean("auto-initialize"));
             Assert.Equal("Akka.Persistence.Sql.Common.Journal.DefaultTimestampProvider, Akka.Persistence.Sql.Common", config.GetString("timestamp-provider"));
         }
 
@@ -40,7 +40,7 @@ namespace Akka.Persistence.Oracle.Tests
             Assert.Equal(string.Empty, config.GetString("connection-string-name"));
             Assert.Equal(TimeSpan.FromSeconds(30), config.GetTimeSpan("connection-timeout"));
             Assert.Equal("SNAPSHOTSTORE", config.GetString("table-name"));
-            Assert.Equal(false, config.GetBoolean("auto-initialize"));
+            Assert.False(config.GetBoolean("auto-initialize"));
         }
     }
 }

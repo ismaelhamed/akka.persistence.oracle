@@ -29,7 +29,9 @@ namespace Akka.Persistence.Oracle.Snapshot
                 payloadColumnName: "Snapshot",
                 manifestColumnName: "Manifest",
                 timestampColumnName: "Timestamp",
-                timeout: sqlConfig.GetTimeSpan("connection-timeout")),
+                serializerIdColumnName: "SerializerId",
+                timeout: sqlConfig.GetTimeSpan("connection-timeout"), 
+                defaultSerializer: config.GetString("serializer")),
                 Context.System.Serialization);
         }
         

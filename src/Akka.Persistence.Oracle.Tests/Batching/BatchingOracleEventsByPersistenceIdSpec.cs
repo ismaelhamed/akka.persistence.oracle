@@ -6,8 +6,9 @@
 //-----------------------------------------------------------------------
 
 using Akka.Configuration;
+using Akka.Persistence.Query;
 using Akka.Persistence.Query.Sql;
-using Akka.Persistence.Sql.TestKit;
+using Akka.Persistence.TCK.Query;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -17,6 +18,7 @@ namespace Akka.Persistence.Oracle.Tests.Batching
     public class BatchingOracleEventsByPersistenceIdSpec : EventsByPersistenceIdSpec
     {
         public static Config Config => ConfigurationFactory.ParseString(@"
+            akka.loglevel = DEBUG
             akka.test.single-expect-default = 10s
             akka.persistence {
                 publish-plugin-commands = on
@@ -33,9 +35,11 @@ namespace Akka.Persistence.Oracle.Tests.Batching
                 }
             }").WithFallback(SqlReadJournal.DefaultConfiguration());
 
-        public BatchingOracleEventsByPersistenceIdSpec(ITestOutputHelper output) 
-            : base(Config, output)
-        { }
+        public BatchingOracleEventsByPersistenceIdSpec(ITestOutputHelper output)
+            : base(Config, nameof(BatchingOracleEventsByPersistenceIdSpec), output)
+        {
+            ReadJournal = Sys.ReadJournalFor<SqlReadJournal>(SqlReadJournal.Identifier);
+        }
 
         protected override void Dispose(bool disposing)
         {
