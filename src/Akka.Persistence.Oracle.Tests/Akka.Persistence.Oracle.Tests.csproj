@@ -156,6 +156,8 @@
     <Compile Include="Query\OraclePersistenceIdsSpec.cs" />
     <Compile Include="Query\OracleEventsByPersistenceIdSpec.cs" />
     <Compile Include="Query\OracleEventsByTagSpec.cs" />
+    <Compile Include="Serialization\OracleJournalSerializationSpec.cs" />
+    <Compile Include="Serialization\OracleSnapshotSerializationSpec.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
