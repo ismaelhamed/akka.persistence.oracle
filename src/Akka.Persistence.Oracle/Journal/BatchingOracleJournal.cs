@@ -230,7 +230,7 @@ END;")
 
             AddParameter(command, ":PersistenceId", OracleDbType.NVarchar2, persistent.PersistenceId);
             AddParameter(command, ":SequenceNr", OracleDbType.Int64, persistent.SequenceNr);
-            AddParameter(command, ":Timestamp", OracleDbType.Int64, 0L);
+            AddParameter(command, ":Timestamp", OracleDbType.Int64, DateTime.UtcNow.Ticks);
             AddParameter(command, ":IsDeleted", OracleDbType.Int16, persistent.IsDeleted);
             AddParameter(command, ":Manifest", OracleDbType.NVarchar2, manifest);
             AddParameter(command, ":Payload", OracleDbType.Blob, binary);
