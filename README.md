@@ -2,7 +2,7 @@
 
 Akka.NET Persistence journal and snapshot store backed by Oracle ODP.NET
 
-![Build Status](https://img.shields.io/vso/build/ismaelhamed/0a339077-6d21-427c-9a48-13f723409ddd/6.svg?style=flat-square)  
+![Build Status](https://img.shields.io/vso/build/ismaelhamed/0791c9f5-57a4-4682-ba52-e96024d1dee1/7.svg?style=flat-square) ![NuGet](https://img.shields.io/nuget/v/Akka.Persistence.Oracle.svg?style=flat-square) ![Downloads](https://img.shields.io/nuget/dt/Akka.Persistence.Oracle.svg?style=flat-square)
 
 ### Configuration
 
@@ -14,7 +14,7 @@ Remember that connection string must be provided separately to Journal and Snaps
 akka.persistence {
 
     journal {
-		plugin = "akka.persistence.journal.oracle"
+        plugin = "akka.persistence.journal.oracle"
         oracle {		
             # qualified type name of the Oracle persistence journal actor
             class = "Akka.Persistence.Oracle.Journal.OracleJournal, Akka.Persistence.Oracle"
@@ -49,7 +49,7 @@ akka.persistence {
     }
 
     snapshot-store {
-		plugin = "akka.persistence.snapshot-store.oracle"
+        plugin = "akka.persistence.snapshot-store.oracle"
         oracle {		
             # qualified type name of the Oracle persistence journal actor
             class = "Akka.Persistence.Oracle.Snapshot.OracleSnapshotStore, Akka.Persistence.Oracle"
@@ -80,13 +80,13 @@ akka.persistence {
 ```
 ### Batching journal
 
-Since version 1.1.3 an alternative, experimental type of the journal has been released, known as batching journal. It's optimized for concurrent writes made by multiple persistent actors, thanks to the ability of batching multiple SQL operations to be executed within the same database connection. In some of those situations we've noticed over an order of magnitude in event write speed.
+Since version 1.2 an alternative, experimental type of the journal has been released, known as batching journal. It's optimized for concurrent writes made by multiple persistent actors, thanks to the ability of batching multiple SQL operations to be executed within the same database connection. In some of those situations we've noticed over an order of magnitude in event write speed.
 
 To use batching journal, simply change `akka.persistence.journal.oracle.class` to *Akka.Persistence.Oracle.Journal.BatchingOracleJournal, Akka.Persistence.Oracle*.
 
 Additionally to the existing settings, batching journal introduces few more:
 
-- `isolation-level` to define isolation level for transactions used withing event reads/writes. Possible options: *unspecified* (default), *chaos*, *read-committed*, *read-uncommitted*, *repeatable-read*, *serializable* or *snapshot*.
+- `isolation-level` to define isolation level for transactions used withing event reads/writes. Possible options: *read-committed* (default). 
 - `max-concurrent-operations` is used to limit the maximum number of database connections used by this journal. You can use them in situations when you want to partition the same ADO.NET pool between multiple components. Current default: *64*.
 - `max-batch-size` defines the maximum number of SQL operations, that are allowed to be executed using the same connection. When there are more operations, they will chunked into subsequent connections. Current default: *100*.
 - `max-buffer-size` defines maximum buffer capacity for the requests send to a journal. Once buffer gets overflown, a journal will call `OnBufferOverflow` method. By default it will reject all incoming requests until the buffer space gets freed. You can inherit from `BatchingOracleJournal` and override that method to provide a custom backpressure strategy. Current default: *500 000*.
@@ -105,9 +105,12 @@ CREATE TABLE EVENTJOURNAL (
     Manifest NVARCHAR2(500) NOT NULL,
     Payload BLOB NOT NULL,
     Tags NVARCHAR2(100) NULL,
-	SerializerId NUMBER(10,0) NULL,
+    SerializerId NUMBER(10,0) NULL,
     CONSTRAINT QU_EVENTJOURNAL UNIQUE (PersistenceId, SequenceNr)
 );
+
+CREATE INDEX IX_EVENTJOURNAL_SequenceNr ON EVENTJOURNAL(SequenceNr);
+CREATE INDEX IX_EVENTJOURNAL_Timestamp ON EVENTJOURNAL(Timestamp);     
 
 CREATE SEQUENCE EVENTJOURNAL_SEQ
     START WITH 1
@@ -140,17 +143,23 @@ CREATE TABLE SNAPSHOTSTORE (
     Timestamp TIMESTAMP(7) NOT NULL,
     Manifest NVARCHAR2(500) NOT NULL,
     Snapshot BLOB NOT NULL,
-	SerializerId NUMBER(10,0) NULL,
+    SerializerId NUMBER(10,0) NULL,
     CONSTRAINT PK_SNAPSHOTSTORE PRIMARY KEY (PersistenceId, SequenceNr)
 );
+
+CREATE INDEX IX_SNAPSHOTSTORE_SequenceNr ON SNAPSHOTSTORE(SequenceNr);
+CREATE INDEX IX_SNAPSHOTSTORE_Timestamp ON SNAPSHOTSTORE(Timestamp);   
+CREATE INDEX IX_SNAPSHOTSTORE_03 ON SNAPSHOTSTORE(Timestamp, SequenceNr DESC, PersistenceId); 
 ```
 ### Migration
 
 #### From 1.1.2 to 1.3.1
 
 ```sql
-ALTER TABLE {your_journal_table_name} ADD COLUMN SerializerId NUMBER(10,0) NULL
-ALTER TABLE {your_snapshot_table_name} ADD COLUMN SerializerId NUMBER(10,0) NULL
+ALTER TABLE {your_journal_table_name} ADD SerializerId NUMBER(10,0) NULL;
+ALTER TABLE {your_snapshot_table_name} ADD SerializerId NUMBER(10,0) NULL;
+
+CREATE INDEX IX_SNAPSHOTSTORE_03 ON SNAPSHOTSTORE(Timestamp, SequenceNr DESC, PersistenceId);
 ```
 
 ### Preparing the test environment
