@@ -29,15 +29,19 @@ namespace Akka.Persistence.Oracle.Snapshot
             : base(configuration, serialization)
         {
             SelectSnapshotSql = $@"
-SELECT {Configuration.PersistenceIdColumnName},
-    {Configuration.SequenceNrColumnName}, 
-    {Configuration.TimestampColumnName}, 
-    {Configuration.ManifestColumnName}, 
-    {Configuration.PayloadColumnName},
-    {Configuration.SerializerIdColumnName}
-FROM {Configuration.FullSnapshotTableName} 
-WHERE {Configuration.PersistenceIdColumnName} = :PersistenceId AND {Configuration.SequenceNrColumnName} <= :SequenceNr AND {Configuration.TimestampColumnName} <= :Timestamp
-ORDER BY {Configuration.SequenceNrColumnName} DESC";
+SELECT * 
+FROM (
+    SELECT {Configuration.PersistenceIdColumnName},
+        {Configuration.SequenceNrColumnName}, 
+        {Configuration.TimestampColumnName}, 
+        {Configuration.ManifestColumnName}, 
+        {Configuration.PayloadColumnName},
+        {Configuration.SerializerIdColumnName}
+    FROM {Configuration.FullSnapshotTableName} 
+    WHERE {Configuration.PersistenceIdColumnName} = :PersistenceId AND {Configuration.SequenceNrColumnName} <= :SequenceNr AND {Configuration.TimestampColumnName} <= :Timestamp
+    ORDER BY {Configuration.SequenceNrColumnName} DESC
+)
+WHERE ROWNUM = 1";
 
             DeleteSnapshotSql = $@"
 DELETE FROM {Configuration.FullSnapshotTableName}
