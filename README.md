@@ -159,7 +159,7 @@ CREATE INDEX IX_SNAPSHOTSTORE_03 ON SNAPSHOTSTORE(Timestamp, SequenceNr DESC, Pe
 ALTER TABLE {your_journal_table_name} ADD SerializerId NUMBER(10,0) NULL;
 ALTER TABLE {your_snapshot_table_name} ADD SerializerId NUMBER(10,0) NULL;
 
-CREATE INDEX IX_SNAPSHOTSTORE_03 ON SNAPSHOTSTORE(Timestamp, SequenceNr DESC, PersistenceId);
+CREATE INDEX IX_SNAPSHOTSTORE_03 ON {your_snapshot_table_name}(Timestamp, SequenceNr DESC, PersistenceId);
 ```
 
 ### Preparing the test environment
