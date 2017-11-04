@@ -6,7 +6,7 @@
 //-----------------------------------------------------------------------
 
 using Akka.Configuration;
-using Akka.Persistence.TestKit.Journal;
+using Akka.Persistence.TCK.Journal;
 using Xunit;
 using Xunit.Abstractions;
 

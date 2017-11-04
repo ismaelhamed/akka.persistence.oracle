@@ -1,5 +1,5 @@
 ﻿using Akka.Configuration;
-using Akka.Persistence.TestKit.Snapshot;
+using Akka.Persistence.TCK.Snapshot;
 using Xunit;
 using Xunit.Abstractions;
 
