@@ -1,9 +1,11 @@
 ﻿using Akka.Configuration;
 using Akka.Persistence.TCK.Serialization;
+using Xunit;
 using Xunit.Abstractions;
 
 namespace Akka.Persistence.Oracle.Tests.Serialization
 {
+    [Collection("OracleSpec")]
     public class OracleSnapshotSerializationSpec : SnapshotStoreSerializationSpec
     {
         private static Config Config => ConfigurationFactory.ParseString(@"

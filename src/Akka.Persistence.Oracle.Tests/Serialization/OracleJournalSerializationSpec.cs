@@ -5,6 +5,7 @@ using Xunit.Abstractions;
 
 namespace Akka.Persistence.Oracle.Tests.Serialization
 {
+    [Collection("OracleSpec")]
     public class OracleJournalSerializationSpec : JournalSerializationSpec
     {
         private static Config Config => ConfigurationFactory.ParseString(@"

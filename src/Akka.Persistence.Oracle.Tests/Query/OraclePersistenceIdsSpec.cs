@@ -9,10 +9,12 @@ using Akka.Configuration;
 using Akka.Persistence.Query;
 using Akka.Persistence.Query.Sql;
 using Akka.Persistence.TCK.Query;
+using Xunit;
 using Xunit.Abstractions;
 
 namespace Akka.Persistence.Oracle.Tests.Query
 {
+    [Collection("OracleSpec")]
     public class OraclePersistenceIdsSpec : PersistenceIdsSpec
     {
         private static Config Config => ConfigurationFactory.ParseString(@"
