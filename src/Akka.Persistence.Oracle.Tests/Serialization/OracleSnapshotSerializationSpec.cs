@@ -19,10 +19,15 @@ namespace Akka.Persistence.Oracle.Tests.Serialization
                         table-name = SNAPSHOTSTORE
                         schema-name = AKKA_PERSISTENCE_TEST
                         auto-initialize = on
-                        connection-string-name = ""TestDb""
+                        connection-string = """ + DbUtils.ConnectionString + @"""
                     }
                 }
             }");
+
+        static OracleSnapshotSerializationSpec()
+        {
+            DbUtils.Initialize();
+        }
 
         public OracleSnapshotSerializationSpec(ITestOutputHelper output)
             : base(Config, nameof(OracleSnapshotSerializationSpec), output)

@@ -30,11 +30,16 @@ namespace Akka.Persistence.Oracle.Tests.Query
                         table-name = EVENTJOURNAL
                         schema-name = AKKA_PERSISTENCE_TEST
                         auto-initialize = on
-                        connection-string-name = ""TestDb""
+                        connection-string = """ + DbUtils.ConnectionString + @"""
                         refresh-interval = 1s
                     }
                 }
             }").WithFallback(SqlReadJournal.DefaultConfiguration());
+
+        static OracleEventsByPersistenceIdSpec()
+        {
+            DbUtils.Initialize();
+        }
 
         public OracleEventsByPersistenceIdSpec(ITestOutputHelper output)
             : base(Config, nameof(OracleEventsByPersistenceIdSpec), output)
