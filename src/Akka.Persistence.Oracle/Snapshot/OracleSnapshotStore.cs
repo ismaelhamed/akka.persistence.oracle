@@ -31,7 +31,8 @@ namespace Akka.Persistence.Oracle.Snapshot
                 timestampColumnName: "Timestamp",
                 serializerIdColumnName: "SerializerId",
                 timeout: sqlConfig.GetTimeSpan("connection-timeout"), 
-                defaultSerializer: config.GetString("serializer")),
+                defaultSerializer: config.GetString("serializer"),
+                useSequentialAccess: config.GetBoolean("use-sequential-access")),
                 Context.System.Serialization);
         }
         

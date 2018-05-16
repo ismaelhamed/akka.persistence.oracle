@@ -29,7 +29,8 @@ namespace Akka.Persistence.Oracle.Journal
                 orderingColumnName: "Ordering",
                 serializerIdColumnName: "SerializerId",
                 timeout: config.GetTimeSpan("connection-timeout", TimeSpan.FromSeconds(30)),
-                defaultSerializer: config.GetString("serializer")))
+                defaultSerializer: config.GetString("serializer"),
+                useSequentialAccess: config.GetBoolean("use-sequential-access")))
         { }
 
         public BatchingOracleJournalSetup(string connectionString, int maxConcurrentOperations, int maxBatchSize, int maxBufferSize, bool autoInitialize, TimeSpan connectionTimeout, IsolationLevel isolationLevel, CircuitBreakerSettings circuitBreakerSettings, ReplayFilterSettings replayFilterSettings, QueryConfiguration namingConventions, string defaultSerializer)

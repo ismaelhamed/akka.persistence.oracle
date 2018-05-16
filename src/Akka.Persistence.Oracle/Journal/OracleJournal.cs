@@ -34,9 +34,10 @@ namespace Akka.Persistence.Oracle.Journal
                 orderingColumnName: "Ordering",
                 serializerIdColumnName: "SerializerId",
                 timeout: config.GetTimeSpan("connection-timeout"),
-                defaultSerializer: config.GetString("serializer")), 
-                    Context.System.Serialization, 
-                    GetTimestampProvider(config.GetString("timestamp-provider")));
+                defaultSerializer: config.GetString("serializer"),
+                useSequentialAccess: config.GetBoolean("use-sequential-access")),
+                Context.System.Serialization, 
+                GetTimestampProvider(config.GetString("timestamp-provider")));
         }
 
         protected override DbConnection CreateDbConnection(string connectionString) => new OracleConnection(connectionString);
