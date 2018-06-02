@@ -69,8 +69,9 @@ DELETE FROM {conventions.FullJournalTableName}
 WHERE {conventions.PersistenceIdColumnName} = :PersistenceId AND {conventions.SequenceNrColumnName} <= :ToSequenceNr";
 
             UpdateSequenceNrSql = $@"
-INSERT INTO {conventions.FullMetaTableName} ({conventions.PersistenceIdColumnName}, {conventions.SequenceNrColumnName}) 
-VALUES (:PersistenceId, :SequenceNr)";
+MERGE INTO {conventions.FullMetaTableName} USING DUAL ON ({conventions.PersistenceIdColumnName} = :PersistenceId)
+WHEN MATCHED THEN UPDATE SET {conventions.SequenceNrColumnName} = :SequenceNr
+WHEN NOT MATCHED THEN INSERT ({conventions.PersistenceIdColumnName}, {conventions.SequenceNrColumnName}) VALUES (:PersistenceId, :SequenceNr)";
 
             ByPersistenceIdSql = $@"
 SELECT {allEventColumnNames}
