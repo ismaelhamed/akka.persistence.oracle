@@ -52,16 +52,22 @@ DELETE FROM {Configuration.FullSnapshotTableName}
 WHERE {Configuration.PersistenceIdColumnName} = :PersistenceId AND {Configuration.SequenceNrColumnName} <= :SequenceNr AND {Configuration.TimestampColumnName} <= :Timestamp";
 
             InsertSnapshotSql = $@"
-MERGE INTO {configuration.FullSnapshotTableName} USING DUAL ON ({configuration.PersistenceIdColumnName} = :PersistenceId AND {configuration.SequenceNrColumnName} = :SequenceNr)
-WHEN MATCHED THEN 
-    UPDATE SET 
-        {configuration.TimestampColumnName} = :Timestamp, 
-        {configuration.ManifestColumnName} = :Manifest,
-        {configuration.PayloadColumnName} = :Payload, 
-        {configuration.SerializerIdColumnName} = :SerializerId
-WHEN NOT MATCHED THEN 
-    INSERT ({configuration.PersistenceIdColumnName}, {configuration.SequenceNrColumnName}, {configuration.TimestampColumnName}, {configuration.ManifestColumnName}, {configuration.PayloadColumnName}, {configuration.SerializerIdColumnName}) 
-    VALUES (:PersistenceId, :SequenceNr, :Timestamp, :Manifest, :Payload, :SerializerId)";
+DECLARE
+    value_count integer;
+BEGIN
+    SELECT COUNT(1) INTO value_count 
+    FROM {configuration.FullSnapshotTableName} 
+    WHERE {configuration.PersistenceIdColumnName} = :PersistenceId AND {configuration.SequenceNrColumnName} = :SequenceNr;
+
+    IF (value_count > 0) THEN
+        UPDATE {configuration.FullSnapshotTableName} 
+        SET {configuration.TimestampColumnName} = :Timestamp, {configuration.ManifestColumnName} = :Manifest, {configuration.PayloadColumnName} = :Payload, {configuration.SerializerIdColumnName} = :SerializerId
+        WHERE {configuration.PersistenceIdColumnName} = :PersistenceId AND {configuration.SequenceNrColumnName} = :SequenceNr;
+    ELSE 
+        INSERT INTO {Configuration.FullSnapshotTableName} ({configuration.PersistenceIdColumnName}, {configuration.SequenceNrColumnName}, {configuration.TimestampColumnName}, {configuration.ManifestColumnName}, {configuration.PayloadColumnName}, {configuration.SerializerIdColumnName}) 
+        VALUES (:PersistenceId, :SequenceNr, :Timestamp, :Manifest, :Payload, :SerializerId);    
+    END IF;
+END;";
 
             CreateSnapshotTableSql = $@"
 DECLARE
@@ -107,7 +113,7 @@ END;";
         protected override void SetPayloadParameter(object snapshot, DbCommand command)
         {
             var snapshotType = snapshot.GetType();
-            var serializer = Serialization.FindSerializerForType(snapshotType);
+            var serializer = Serialization.FindSerializerForType(snapshotType, Configuration.DefaultSerializer);
             var binary = serializer.ToBinary(snapshot);
             AddParameter(command, ":Payload", OracleDbType.Blob, binary);
         }
