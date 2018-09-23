@@ -2,11 +2,13 @@
 
 Akka.NET Persistence journal and snapshot store backed by Oracle ODP.NET
 
-![Build Status](https://img.shields.io/vso/build/ismaelhamed/0791c9f5-57a4-4682-ba52-e96024d1dee1/7.svg?style=flat-square) ![NuGet](https://img.shields.io/nuget/v/Akka.Persistence.Oracle.svg?style=flat-square) ![Downloads](https://img.shields.io/nuget/dt/Akka.Persistence.Oracle.svg?style=flat-square)
+[![Build Status](https://dev.azure.com/ismaelhamed/akka.persistence.oracle/_apis/build/status/akka.persistence.oracle-CI)](https://dev.azure.com/ismaelhamed/akka.persistence.oracle/_build/latest?definitionId=9)
+[![NuGet](https://img.shields.io/nuget/v/Akka.Persistence.Oracle.svg)](https://www.nuget.org/packages/Akka.Persistence.Oracle/)
+![Downloads](https://img.shields.io/nuget/dt/Akka.Persistence.Oracle.svg)
 
-### Configuration
+## Configuration
 
-Both journal and snapshot store share the same configuration keys (however they resides in separate scopes, so they are definied distinctly for either journal or snapshot store):
+Both journal and snapshot store share the same configuration keys (however they resides in separate scopes, so they are defined distinctly for either journal or snapshot store):
 
 Remember that connection string must be provided separately to Journal and Snapshot Store.
 
@@ -15,7 +17,7 @@ akka.persistence {
 
     journal {
         plugin = "akka.persistence.journal.oracle"
-        oracle {		
+        oracle {
             # qualified type name of the Oracle persistence journal actor
             class = "Akka.Persistence.Oracle.Journal.OracleJournal, Akka.Persistence.Oracle"
 
@@ -24,9 +26,9 @@ akka.persistence {
 
             # connection string used for database access
             connection-string = ""
-			
+
             # connection string name for .config file used when no connection string has been provided
-            connection-string-name = ""			
+            connection-string-name = ""
 
             # default SQL commands timeout
             connection-timeout = 30s
@@ -39,7 +41,7 @@ akka.persistence {
 
             # should corresponding journal table be initialized automatically
             auto-initialize = off
-			
+
             # timestamp provider used for generation of journal entries timestamps
             timestamp-provider = "Akka.Persistence.Sql.Common.Journal.DefaultTimestampProvider, Akka.Persistence.Sql.Common"
 
@@ -50,7 +52,7 @@ akka.persistence {
 
     snapshot-store {
         plugin = "akka.persistence.snapshot-store.oracle"
-        oracle {		
+        oracle {
             # qualified type name of the Oracle persistence journal actor
             class = "Akka.Persistence.Oracle.Snapshot.OracleSnapshotStore, Akka.Persistence.Oracle"
 
@@ -59,9 +61,9 @@ akka.persistence {
 
             # connection string used for database access
             connection-string = ""
-			
+
             # connection string name for .config file used when no connection string has been provided
-            connection-string-name = ""			
+            connection-string-name = ""
 
             # default SQL commands timeout
             connection-timeout = 30s
@@ -78,6 +80,7 @@ akka.persistence {
     }
 }
 ```
+
 ### Batching journal
 
 Since version 1.2 an alternative, experimental type of the journal has been released, known as batching journal. It's optimized for concurrent writes made by multiple persistent actors, thanks to the ability of batching multiple SQL operations to be executed within the same database connection. In some of those situations we've noticed over an order of magnitude in event write speed.
@@ -86,16 +89,16 @@ To use batching journal, simply change `akka.persistence.journal.oracle.class` t
 
 Additionally to the existing settings, batching journal introduces few more:
 
-- `isolation-level` to define isolation level for transactions used withing event reads/writes. Possible options: *read-committed* (default). 
-- `max-concurrent-operations` is used to limit the maximum number of database connections used by this journal. You can use them in situations when you want to partition the same ADO.NET pool between multiple components. Current default: *64*.
+- `isolation-level` to define isolation level for transactions used withing event reads/writes. Possible options: *read-committed* (default).
+- `max-concurrent-operations` is used to limit the maximum number of database connections used by this journal. You can use them in situations when you want to partition the same `ADO.NET` pool between multiple components. Current default: *64*.
 - `max-batch-size` defines the maximum number of SQL operations, that are allowed to be executed using the same connection. When there are more operations, they will chunked into subsequent connections. Current default: *100*.
-- `max-buffer-size` defines maximum buffer capacity for the requests send to a journal. Once buffer gets overflown, a journal will call `OnBufferOverflow` method. By default it will reject all incoming requests until the buffer space gets freed. You can inherit from `BatchingOracleJournal` and override that method to provide a custom backpressure strategy. Current default: *500 000*.
+- `max-buffer-size` defines maximum buffer capacity for the requests send to a journal. Once buffer gets overflown, a journal will call `OnBufferOverflow` method. By default it will reject all incoming requests until the buffer space gets freed. You can inherit from `BatchingOracleJournal` and override that method to provide a custom back-pressure strategy. Current default: *500 000*.
 
 ### Table Schema
 
 Oracle persistence plugin defines a default table schema used for journal, snapshot store and metadata table.
 
-```SQL
+```sql
 CREATE TABLE EVENTJOURNAL (
     Ordering INTEGER NOT NULL,
     PersistenceId NVARCHAR2(255) NOT NULL,
@@ -110,7 +113,7 @@ CREATE TABLE EVENTJOURNAL (
 );
 
 CREATE INDEX IX_EVENTJOURNAL_SequenceNr ON EVENTJOURNAL(SequenceNr);
-CREATE INDEX IX_EVENTJOURNAL_Timestamp ON EVENTJOURNAL(Timestamp);     
+CREATE INDEX IX_EVENTJOURNAL_Timestamp ON EVENTJOURNAL(Timestamp);
 
 CREATE SEQUENCE EVENTJOURNAL_SEQ
     START WITH 1
@@ -120,8 +123,8 @@ CREATE SEQUENCE EVENTJOURNAL_SEQ
     NOCYCLE
     NOMAXVALUE;
 
-CREATE OR REPLACE TRIGGER EVENTJOURNAL_TRG 
-BEFORE INSERT ON EVENTJOURNAL 
+CREATE OR REPLACE TRIGGER EVENTJOURNAL_TRG
+BEFORE INSERT ON EVENTJOURNAL
 FOR EACH ROW
 BEGIN
     :new.Ordering := EVENTJOURNAL_SEQ.NEXTVAL;
@@ -148,9 +151,10 @@ CREATE TABLE SNAPSHOTSTORE (
 );
 
 CREATE INDEX IX_SNAPSHOTSTORE_SequenceNr ON SNAPSHOTSTORE(SequenceNr);
-CREATE INDEX IX_SNAPSHOTSTORE_Timestamp ON SNAPSHOTSTORE(Timestamp);   
-CREATE INDEX IX_SNAPSHOTSTORE_03 ON SNAPSHOTSTORE(Timestamp, SequenceNr DESC, PersistenceId); 
+CREATE INDEX IX_SNAPSHOTSTORE_Timestamp ON SNAPSHOTSTORE(Timestamp);
+CREATE INDEX IX_SNAPSHOTSTORE_03 ON SNAPSHOTSTORE(Timestamp, SequenceNr DESC, PersistenceId);
 ```
+
 ### Migration
 
 #### From 1.1.2 to 1.3.1
@@ -166,29 +170,29 @@ CREATE INDEX IX_SNAPSHOTSTORE_03 ON {your_snapshot_table_name}(Timestamp, Sequen
 
 In order to run the tests, you must do the following things:
 
-1. Download and install Docker for Windows from: https://docs.docker.com/docker-for-windows/
-2. Get Oracle Express 11g R2 on Ubuntu 16.04 LTS from: https://hub.docker.com/r/wnameless/oracle-xe-11g/
+1. Download and install Docker for Windows from: <https://docs.docker.com/docker-for-windows/>
+2. Get Oracle Express 11g R2 on Ubuntu 16.04 LTS from: <https://hub.docker.com/r/wnameless/oracle-xe-11g/>
 3. Run the following script to create the proper user and schema:
-```sql
-CREATE USER AKKA_PERSISTENCE_TEST IDENTIFIED BY akkadotnet; 
-GRANT CREATE SESSION TO AKKA_PERSISTENCE_TEST;
-GRANT CREATE TABLE TO AKKA_PERSISTENCE_TEST;
-GRANT CREATE VIEW TO AKKA_PERSISTENCE_TEST;
-GRANT CREATE SEQUENCE TO AKKA_PERSISTENCE_TEST;
-GRANT CREATE TRIGGER TO AKKA_PERSISTENCE_TEST;
 
-ALTER USER AKKA_PERSISTENCE_TEST QUOTA UNLIMITED ON USERS;
-ALTER USER AKKA_PERSISTENCE_TEST DEFAULT TABLESPACE USERS;
-```
+    ```sql
+    CREATE USER AKKA_PERSISTENCE_TEST IDENTIFIED BY akkadotnet;
+    GRANT CREATE SESSION TO AKKA_PERSISTENCE_TEST;
+    GRANT CREATE TABLE TO AKKA_PERSISTENCE_TEST;
+    GRANT CREATE VIEW TO AKKA_PERSISTENCE_TEST;
+    GRANT CREATE SEQUENCE TO AKKA_PERSISTENCE_TEST;
+    GRANT CREATE TRIGGER TO AKKA_PERSISTENCE_TEST;
+
+    ALTER USER AKKA_PERSISTENCE_TEST QUOTA UNLIMITED ON USERS;
+    ALTER USER AKKA_PERSISTENCE_TEST DEFAULT TABLESPACE USERS;
+    ```
+
 4. The default connection string uses the following credentials: `Data Source=192.168.99.100:1521/XE;User Id=AKKA_PERSISTENCE_TEST;Password=akkadotnet;`
 5. A custom app.config file can be used and needs to be placed in the same folder as the dll
 
 ### Running the tests
 
-The Oracle tests are packaged and run as part of the "RunTests" and "All" build tasks. Run the following command from the PowerShell command line: 
+The Oracle tests are packaged and run as part of the "RunTests" and "All" build tasks. Run the following command from the PowerShell command line:
+
 ```powershell
 PS> .\build RunTests
 ```
-
-
-
