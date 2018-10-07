@@ -114,6 +114,7 @@ BEGIN
                 {configuration.PayloadColumnName} BLOB NOT NULL,
                 {configuration.TagsColumnName} NVARCHAR2(100) NULL,
                 {configuration.SerializerIdColumnName} NUMBER(10,0) NULL,
+                CONSTRAINT PK_{configuration.JournalEventsTableName} PRIMARY KEY ({configuration.OrderingColumnName}),
                 CONSTRAINT QU_{configuration.JournalEventsTableName} UNIQUE({configuration.PersistenceIdColumnName}, {configuration.SequenceNrColumnName})
             )';
 

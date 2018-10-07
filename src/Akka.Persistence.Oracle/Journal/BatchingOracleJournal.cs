@@ -123,6 +123,7 @@ BEGIN
                 {conventions.PayloadColumnName} BLOB NOT NULL,
                 {conventions.TagsColumnName} NVARCHAR2(100) NULL,
                 {conventions.SerializerIdColumnName} NUMBER(10,0) NULL,
+                CONSTRAINT PK_{conventions.JournalEventsTableName} PRIMARY KEY ({conventions.OrderingColumnName}),
                 CONSTRAINT QU_{conventions.JournalEventsTableName} UNIQUE({conventions.PersistenceIdColumnName}, {conventions.SequenceNrColumnName})
             )';
 
