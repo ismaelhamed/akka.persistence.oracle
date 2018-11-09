@@ -2,6 +2,7 @@
 
 Akka.NET Persistence journal and snapshot store backed by Oracle ODP.NET
 
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/d9fa5125e8284a4d8a6b9e04b355fd1f)](https://app.codacy.com/app/ismaelhamed/akka.persistence.oracle?utm_source=github.com&utm_medium=referral&utm_content=ismaelhamed/akka.persistence.oracle&utm_campaign=Badge_Grade_Dashboard)
 [![Build Status](https://dev.azure.com/ismaelhamed/akka.persistence.oracle/_apis/build/status/akka.persistence.oracle-CI)](https://dev.azure.com/ismaelhamed/akka.persistence.oracle/_build/latest?definitionId=9)
 [![NuGet](https://img.shields.io/nuget/v/Akka.Persistence.Oracle.svg)](https://www.nuget.org/packages/Akka.Persistence.Oracle/)
 ![Downloads](https://img.shields.io/nuget/dt/Akka.Persistence.Oracle.svg)
