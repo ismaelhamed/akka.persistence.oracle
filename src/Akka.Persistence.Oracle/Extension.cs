@@ -4,30 +4,33 @@ using Akka.Persistence.Sql.Common;
 
 namespace Akka.Persistence.Oracle
 {
+    /// <inheritdoc />
     /// <summary>
     /// Configuration settings representation targeting Oracle journal actor.
     /// </summary>
     public class OracleJournalSettings : JournalSettings
     {
-        public const string ConfigPath = "akka.persistence.journal.oracle";
+        public static readonly string ConfigPath = "akka.persistence.journal.oracle";
 
         public OracleJournalSettings(Config config)
             : base(config)
         { }
     }
 
+    /// <inheritdoc />
     /// <summary>
     /// Configuration settings representation targeting Oracle snapshot store actor.
     /// </summary>
     public class OracleSnapshotSettings : SnapshotStoreSettings
     {
-        public const string ConfigPath = "akka.persistence.snapshot-store.oracle";
+        public static readonly string ConfigPath = "akka.persistence.snapshot-store.oracle";
 
         public OracleSnapshotSettings(Config config) 
             : base(config)
         { }
     }
 
+    /// <inheritdoc />
     /// <summary>
     /// An actor system extension initializing support for Oracle persistence layer.
     /// </summary>

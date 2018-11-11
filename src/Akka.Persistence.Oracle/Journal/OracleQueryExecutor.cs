@@ -239,7 +239,9 @@ END;";
                 AddParameter(command, ":Tag", OracleDbType.NVarchar2, tagBuilder.ToString());
             }
             else
+            {
                 AddParameter(command, ":Tag", OracleDbType.NVarchar2, DBNull.Value);
+            }
         }
 
         public override async Task SelectByPersistenceIdAsync(DbConnection connection, CancellationToken cancellationToken, string persistenceId, long fromSequenceNr, long toSequenceNr, long max, Action<IPersistentRepresentation> callback)
@@ -332,7 +334,10 @@ END;";
                             tx.Commit();
                         }
                     }
-                    else tx.Commit();
+                    else
+                    {
+                        tx.Commit();
+                    }
                 }
             }
         }
