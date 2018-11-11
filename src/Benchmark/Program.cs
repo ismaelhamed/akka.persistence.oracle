@@ -8,7 +8,7 @@ using Akka.Pattern;
 
 namespace Benchmark
 {
-    internal class Program
+    internal static class Program
     {
         // if you want to benchmark your persistent storage provides, paste the configuration in string below
         // by default we're checking against in-memory journal
@@ -67,10 +67,12 @@ namespace Benchmark
                 stopwatch.Start();
 
                 for (var i = 0; i < MessagesPerActor; i++)
+                {
                     for (var j = 0; j < ActorCount; j++)
                     {
                         actors[j].Tell(new Store(1));
                     }
+                }
 
                 var finished = new Task[ActorCount];
                 for (var i = 0; i < ActorCount; i++)
