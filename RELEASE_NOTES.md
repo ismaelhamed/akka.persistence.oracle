@@ -1,3 +1,8 @@
+#### 1.3.10 November 03 2018
+
+Updated to Akka.Persistence v1.3.10, and added missing PK to the EventJournal table.
+
+
 #### 1.3.8 June 5 2018
 
 Updated to Akka.Persistence v1.3.8
