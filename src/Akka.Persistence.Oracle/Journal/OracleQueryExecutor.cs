@@ -73,14 +73,22 @@ WHERE e.{Configuration.PersistenceIdColumnName} = :PersistenceId AND e.{Configur
 ORDER BY e.{Configuration.SequenceNrColumnName} ASC";
 
             ByTagSql = $@"
-SELECT * 
+SELECT {Configuration.PersistenceIdColumnName} AS PersistenceId,
+    {Configuration.SequenceNrColumnName} AS SequenceNr, 
+    {Configuration.TimestampColumnName} AS Timestamp, 
+    {Configuration.IsDeletedColumnName} AS IsDeleted, 
+    {Configuration.ManifestColumnName} AS Manifest, 
+    {Configuration.PayloadColumnName} AS Payload, 
+    {Configuration.SerializerIdColumnName} AS SerializerId,
+    {Configuration.OrderingColumnName} AS Ordering
 FROM (
-    SELECT {allEventColumnNames}, e.{Configuration.OrderingColumnName} AS Ordering
-    FROM { Configuration.FullJournalTableName} e
+    SELECT {allEventColumnNames}, e.{Configuration.OrderingColumnName} AS Ordering, ROW_NUMBER() OVER (ORDER BY e.{Configuration.OrderingColumnName} ASC) AS RN
+    FROM {Configuration.FullJournalTableName} e
     WHERE e.{Configuration.OrderingColumnName} > :Ordering AND e.{Configuration.TagsColumnName} LIKE :Tag
-    ORDER BY {Configuration.OrderingColumnName} ASC
 )
-WHERE ROWNUM <= :Take";
+WHERE RN <= :Take";
+
+
 
             InsertEventSql = $@"
 INSERT INTO {Configuration.FullJournalTableName} (
