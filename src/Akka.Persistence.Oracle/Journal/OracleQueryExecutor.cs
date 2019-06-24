@@ -254,6 +254,9 @@ END;";
 
         public override async Task SelectByPersistenceIdAsync(DbConnection connection, CancellationToken cancellationToken, string persistenceId, long fromSequenceNr, long toSequenceNr, long max, Action<IPersistentRepresentation> callback)
         {
+            //In Akka.Persistence.Oracle, Sequence number can never be 0.
+            //So to optimize the performance there is no need to execute this query especially for brand new actors going into recovery stage.
+            if (toSequenceNr == 0) return;
             using (var command = (OracleCommand)GetCommand(connection, ByPersistenceIdSql))
             {
                 AddParameter(command, ":PersistenceId", OracleDbType.NVarchar2, persistenceId);
