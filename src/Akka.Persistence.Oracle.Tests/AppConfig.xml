@@ -1,6 +1,0 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<configuration>
-  <connectionStrings>
-    <add name="TestDb" connectionString="Data Source=localhost:1521/XE;User Id=AKKA_PERSISTENCE_TEST;Password=akkadotnet;" />
-  </connectionStrings>
-</configuration>
