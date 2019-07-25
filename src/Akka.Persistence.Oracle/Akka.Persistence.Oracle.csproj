@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <Description>Akka.NET Persistence journal and snapshot store backed by Oracle ODP.NET</Description>
@@ -23,9 +23,9 @@
     <EmbeddedResource Include="oracle.conf" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Akka" Version="1.3.12" />
-    <PackageReference Include="Akka.Persistence" Version="1.3.12" />
-    <PackageReference Include="Akka.Persistence.Sql.Common" Version="1.3.12" />
+    <PackageReference Include="Akka" Version="1.4.0-beta1" />
+    <PackageReference Include="Akka.Persistence" Version="1.4.0-beta1" />
+    <PackageReference Include="Akka.Persistence.Sql.Common" Version="1.4.0-beta1" />
     <PackageReference Include="Oracle.ManagedDataAccess.Core" Version="2.18.6" />
   </ItemGroup>
 </Project>
