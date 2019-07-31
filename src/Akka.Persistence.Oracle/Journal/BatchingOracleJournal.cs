@@ -221,29 +221,35 @@ END;")
             var payloadType = persistent.Payload.GetType();
             var serializer = serialization.FindSerializerForType(payloadType, Setup.DefaultSerializer);
 
-            var manifest = " "; // HACK
-            if (serializer is SerializerWithStringManifest stringManifest)
+            // TODO: hack. Replace when https://github.com/akkadotnet/akka.net/issues/3811
+            Akka.Serialization.Serialization.WithTransport(serialization.System, () =>
             {
-                manifest = stringManifest.Manifest(persistent.Payload);
-            }
-            else
-            {
-                if (serializer.IncludeManifest)
+                var manifest = " "; // HACK
+                if (serializer is SerializerWithStringManifest stringManifest)
                 {
-                    manifest = payloadType.TypeQualifiedName();
+                    manifest = stringManifest.Manifest(persistent.Payload);
                 }
-            }
+                else
+                {
+                    if (serializer.IncludeManifest)
+                    {
+                        manifest = payloadType.TypeQualifiedName();
+                    }
+                }
 
-            var binary = serializer.ToBinary(persistent.Payload);
+                var binary = serializer.ToBinary(persistent.Payload);
 
-            AddParameter(command, ":PersistenceId", OracleDbType.NVarchar2, persistent.PersistenceId);
-            AddParameter(command, ":SequenceNr", OracleDbType.Int64, persistent.SequenceNr);
-            AddParameter(command, ":Timestamp", OracleDbType.Int64, DateTime.UtcNow.Ticks);
-            AddParameter(command, ":IsDeleted", OracleDbType.Int16, persistent.IsDeleted);
-            AddParameter(command, ":Manifest", OracleDbType.NVarchar2, manifest);
-            AddParameter(command, ":Payload", OracleDbType.Blob, binary);
-            AddParameter(command, ":Tag", OracleDbType.NVarchar2, tags);
-            AddParameter(command, ":SerializerId", OracleDbType.Int32, serializer.Identifier);
+                AddParameter(command, ":PersistenceId", OracleDbType.NVarchar2, persistent.PersistenceId);
+                AddParameter(command, ":SequenceNr", OracleDbType.Int64, persistent.SequenceNr);
+                AddParameter(command, ":Timestamp", OracleDbType.Int64, DateTime.UtcNow.Ticks);
+                AddParameter(command, ":IsDeleted", OracleDbType.Int16, persistent.IsDeleted);
+                AddParameter(command, ":Manifest", OracleDbType.NVarchar2, manifest);
+                AddParameter(command, ":Payload", OracleDbType.Blob, binary);
+                AddParameter(command, ":Tag", OracleDbType.NVarchar2, tags);
+                AddParameter(command, ":SerializerId", OracleDbType.Int32, serializer.Identifier);
+
+                return manifest;
+            });
         }
 
         protected override async Task<long> ReadHighestSequenceNr(string persistenceId, OracleCommand command)

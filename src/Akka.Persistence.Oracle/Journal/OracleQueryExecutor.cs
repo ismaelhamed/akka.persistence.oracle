@@ -198,11 +198,13 @@ END;";
             {
                 var type = Type.GetType(manifest, true);
                 var deserializer = Serialization.FindSerializerForType(type, Configuration.DefaultSerializer);
-                deserialized = deserializer.FromBinary((byte[])payload, type);
+                // TODO: hack. Replace when https://github.com/akkadotnet/akka.net/issues/3811
+                deserialized = Akka.Serialization.Serialization.WithTransport(Serialization.System, () => deserializer.FromBinary((byte[])payload, type));
             }
             else
             {
                 var serializerId = reader.GetInt32(SerializerIdIndex);
+                // TODO: hack. Replace when https://github.com/akkadotnet/akka.net/issues/3811
                 deserialized = Serialization.Deserialize((byte[])payload, serializerId, manifest);
             }
 
@@ -215,19 +217,22 @@ END;";
             var serializer = Serialization.FindSerializerForType(payloadType, Configuration.DefaultSerializer);
 
             var manifest = " "; // HACK
-            if (serializer is SerializerWithStringManifest stringManifest)
+            var binary = Akka.Serialization.Serialization.WithTransport(Serialization.System, () =>
             {
-                manifest = stringManifest.Manifest(e.Payload);
-            }
-            else
-            {
-                if (serializer.IncludeManifest)
+                if (serializer is SerializerWithStringManifest stringManifest)
                 {
-                    manifest = payloadType.TypeQualifiedName();
+                    manifest = stringManifest.Manifest(e.Payload);
                 }
-            }
+                else
+                {
+                    if (serializer.IncludeManifest)
+                    {
+                        manifest = payloadType.TypeQualifiedName();
+                    }
+                }
 
-            var binary = serializer.ToBinary(e.Payload);
+                return serializer.ToBinary(e.Payload);
+            });
 
             AddParameter(command, ":PersistenceId", OracleDbType.NVarchar2, e.PersistenceId);
             AddParameter(command, ":SequenceNr", OracleDbType.Int64, e.SequenceNr);

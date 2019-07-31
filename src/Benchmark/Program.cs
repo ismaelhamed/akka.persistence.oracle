@@ -39,7 +39,7 @@ namespace Benchmark
             }");
 
         public const int ActorCount = 1000;
-        public const int MessagesPerActor = 100;
+        public const int MessagesPerActor = 10;
 
         private static void Main(string[] args)
         {

@@ -33,9 +33,11 @@ namespace Akka.Persistence.Oracle.Tests
         public OracleSnapshotStoreSpec(ITestOutputHelper output)
             : base(SpecConfig, "OracleSnapshotStoreSpec", output)
         {
-            OraclePersistence.Get(Sys);
             Initialize();
         }
+
+        // TODO: hack. Replace when https://github.com/akkadotnet/akka.net/issues/3811
+        protected override bool SupportsSerialization => false;
 
         protected override void Dispose(bool disposing)
         {
