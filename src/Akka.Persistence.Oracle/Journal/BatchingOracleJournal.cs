@@ -80,14 +80,20 @@ WHERE e.{conventions.PersistenceIdColumnName} = :PersistenceId AND e.{convention
 ORDER BY e.{conventions.SequenceNrColumnName} ASC";
 
             ByTagSql = $@"
-SELECT * 
+SELECT {conventions.PersistenceIdColumnName} AS PersistenceId,
+    {conventions.SequenceNrColumnName} AS SequenceNr, 
+    {conventions.TimestampColumnName} AS Timestamp, 
+    {conventions.IsDeletedColumnName} AS IsDeleted, 
+    {conventions.ManifestColumnName} AS Manifest, 
+    {conventions.PayloadColumnName} AS Payload, 
+    {conventions.SerializerIdColumnName} AS SerializerId,
+    {conventions.OrderingColumnName} AS Ordering
 FROM (
-    SELECT {allEventColumnNames}, e.{conventions.OrderingColumnName} AS Ordering
-    FROM { conventions.FullJournalTableName} e
+    SELECT {allEventColumnNames}, e.{conventions.OrderingColumnName} AS Ordering, ROW_NUMBER() OVER (ORDER BY e.{conventions.OrderingColumnName} ASC) AS RN
+    FROM {conventions.FullJournalTableName} e
     WHERE e.{conventions.OrderingColumnName} > :Ordering AND e.{conventions.TagsColumnName} LIKE :Tag
-    ORDER BY {conventions.OrderingColumnName} ASC
 )
-WHERE ROWNUM <= :Take";
+WHERE RN <= :Take";
 
             InsertEventSql = $@"
 INSERT INTO {conventions.FullJournalTableName} (
