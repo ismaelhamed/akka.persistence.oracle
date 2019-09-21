@@ -114,7 +114,8 @@ END;";
         {
             var snapshotType = snapshot.GetType();
             var serializer = Serialization.FindSerializerForType(snapshotType, Configuration.DefaultSerializer);
-            var binary = serializer.ToBinary(snapshot);
+            // TODO: hack. Replace when https://github.com/akkadotnet/akka.net/issues/3811
+            var binary = Akka.Serialization.Serialization.WithTransport(Serialization.System, () => serializer.ToBinary(snapshot));
             AddParameter(command, ":Payload", OracleDbType.Blob, binary);
         }
 
