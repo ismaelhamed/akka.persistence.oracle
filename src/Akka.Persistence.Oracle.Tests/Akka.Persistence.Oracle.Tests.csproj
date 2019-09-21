@@ -1,12 +1,12 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <Import Project="..\common.props" />
   <PropertyGroup Condition="'$(OS)' == 'Windows_NT'">
-    <TargetFrameworks>$(NetCoreTestVersion)</TargetFrameworks>
+    <TargetFramework>netcoreapp2.0</TargetFramework>
   </PropertyGroup>
 
   <!-- disable .NET Framework (Mono) on Linux-->
   <PropertyGroup Condition="'$(OS)' != 'Windows_NT'">
-    <TargetFrameworks>$(NetCoreTestVersion)</TargetFrameworks>
+    <TargetFramework>netcoreapp2.0</TargetFramework>
   </PropertyGroup>
 
   <ItemGroup>
