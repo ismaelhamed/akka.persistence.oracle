@@ -15,7 +15,7 @@
     <NetFrameworkTestVersion>net461</NetFrameworkTestVersion>
     <NetStandardLibVersion>netstandard2.0</NetStandardLibVersion>
     <NetFrameworkLibVersion>net452</NetFrameworkLibVersion>
-    <AkkaPackageTags>akka;actors;actor model;Akka;concurrency;persistence;eventsource;oracle</AkkaPackageTags>
+    <AkkaPackageTags>akka;actors;actor model;concurrency;persistence;eventsource;oracle</AkkaPackageTags>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
     <DefineConstants>$(DefineConstants);RELEASE</DefineConstants>
