@@ -5,7 +5,8 @@ Akka.NET Persistence journal and snapshot store backed by Oracle ODP.NET
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/d9fa5125e8284a4d8a6b9e04b355fd1f)](https://app.codacy.com/app/ismaelhamed/akka.persistence.oracle?utm_source=github.com&utm_medium=referral&utm_content=ismaelhamed/akka.persistence.oracle&utm_campaign=Badge_Grade_Dashboard)
 [![Build Status](https://dev.azure.com/ismaelhamed/akka.persistence.oracle/_apis/build/status/akka.persistence.oracle-CI)](https://dev.azure.com/ismaelhamed/akka.persistence.oracle/_build/latest?definitionId=9)
 [![NuGet](https://img.shields.io/nuget/v/Akka.Persistence.Oracle.svg)](https://www.nuget.org/packages/Akka.Persistence.Oracle/)
-[![Downloads](https://img.shields.io/nuget/dt/Akka.Persistence.Oracle.svg)](https://www.nuget.org/stats/packages/Akka.Persistence.Oracle?groupby=Version)
+![Downloads](https://img.shields.io/nuget/dt/Akka.Persistence.Oracle.svg)
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fismaelhamed%2Fakka.persistence.oracle.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Fismaelhamed%2Fakka.persistence.oracle?ref=badge_shield)
 
 ## Configuration
 
@@ -204,3 +205,6 @@ The Oracle tests are packaged and run as part of the "RunTests" and "All" build 
 ```powershell
 PS> .\build RunTests
 ```
+
+## License
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fismaelhamed%2Fakka.persistence.oracle.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2Fismaelhamed%2Fakka.persistence.oracle?ref=badge_large)
