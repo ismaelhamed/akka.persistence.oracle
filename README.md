@@ -6,6 +6,7 @@ Akka.NET Persistence journal and snapshot store backed by Oracle ODP.NET
 [![Build Status](https://dev.azure.com/ismaelhamed/akka.persistence.oracle/_apis/build/status/akka.persistence.oracle-CI)](https://dev.azure.com/ismaelhamed/akka.persistence.oracle/_build/latest?definitionId=9)
 [![NuGet](https://img.shields.io/nuget/v/Akka.Persistence.Oracle.svg)](https://www.nuget.org/packages/Akka.Persistence.Oracle/)
 ![Downloads](https://img.shields.io/nuget/dt/Akka.Persistence.Oracle.svg)
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fismaelhamed%2Fakka.persistence.oracle.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Fismaelhamed%2Fakka.persistence.oracle?ref=badge_shield)
 
 ## Configuration
 
@@ -204,3 +205,6 @@ The Oracle tests are packaged and run as part of the "RunTests" and "All" build 
 ```powershell
 PS> .\build RunTests
 ```
+
+## License
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fismaelhamed%2Fakka.persistence.oracle.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2Fismaelhamed%2Fakka.persistence.oracle?ref=badge_large)
