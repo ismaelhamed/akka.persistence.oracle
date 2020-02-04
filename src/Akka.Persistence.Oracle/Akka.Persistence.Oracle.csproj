@@ -18,6 +18,6 @@
     <PackageReference Include="Akka" Version="1.4.0-beta4" />
     <PackageReference Include="Akka.Persistence" Version="1.4.0-beta4" />
     <PackageReference Include="Akka.Persistence.Sql.Common" Version="1.4.0-beta4" />
-    <PackageReference Include="Oracle.ManagedDataAccess.Core" Version="2.19.31" />
+    <PackageReference Include="Oracle.ManagedDataAccess.Core" Version="2.19.60" />
   </ItemGroup>
 </Project>

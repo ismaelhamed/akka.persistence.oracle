@@ -4,7 +4,7 @@
     <Authors>Ismael Hamed</Authors>
     <VersionPrefix>1.4.0</VersionPrefix>
     <PackageProjectUrl>https://github.com/ismaelhamed/akka.persistence.oracle</PackageProjectUrl>
-    <PackageReleaseNotes>Updated to Akka.Persistence v1.4.0-beta1</PackageReleaseNotes>
+    <PackageReleaseNotes>Updated to Akka.Persistence v1.4.0-beta4</PackageReleaseNotes>
     <NoWarn>$(NoWarn);CS1591;xUnit1013</NoWarn>
   </PropertyGroup>
   <PropertyGroup>
