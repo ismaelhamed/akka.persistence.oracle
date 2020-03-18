@@ -10,13 +10,13 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Akka" Version="1.4.2" />
-    <PackageReference Include="Akka.Persistence" Version="1.4.2" />
-    <PackageReference Include="Akka.Persistence.Sql.Common" Version="1.4.2" />
-    <PackageReference Include="Akka.Persistence.Sql.TestKit" Version="1.4.2" />
-    <PackageReference Include="Akka.Streams" Version="1.4.2" />
-    <PackageReference Include="Akka.Streams.TestKit" Version="1.4.2" />
-    <PackageReference Include="Akka.TestKit" Version="1.4.2" />
+    <PackageReference Include="Akka" Version="1.4.3" />
+    <PackageReference Include="Akka.Persistence" Version="1.4.3" />
+    <PackageReference Include="Akka.Persistence.Sql.Common" Version="1.4.3" />
+    <PackageReference Include="Akka.Persistence.Sql.TestKit" Version="1.4.3" />
+    <PackageReference Include="Akka.Streams" Version="1.4.3" />
+    <PackageReference Include="Akka.Streams.TestKit" Version="1.4.3" />
+    <PackageReference Include="Akka.TestKit" Version="1.4.3" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Xml" Version="2.2.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.2.0" />
     <PackageReference Include="Oracle.ManagedDataAccess.Core" Version="2.19.60" />
