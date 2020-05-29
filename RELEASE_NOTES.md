@@ -1,34 +1,30 @@
-#### 1.3.18 March 10 2020
+#### 1.4.7 May 29 2020
 
-Updated to Akka.Persistence v1.3.18
+Updated to Akka.Persistence v1.4.7
 
-#### 1.3.17 January 14 2020
+#### 1.4.3 March 18 2020
 
-Updated to Akka.Persistence v1.3.17
+Updated to Akka.Persistence v1.4.3
 
-#### 1.3.16 December 17 2019
+#### 1.4.0-beta4 February 4 2020
 
-Updated to Akka.Persistence v1.3.16
+Updated to Akka.Persistence v1.4.0-beta4
 
-#### 1.3.15 September 29 2019
+#### 1.4.0-beta3 December 17 2019
 
-Updated to Akka.Persistence v1.3.15
+Updated to Akka.Persistence v1.4.0-beta3
 
-#### 1.3.14 July 31 2019
+#### 1.4.0-beta2 September 29 2019
 
-Updated to Akka.Persistence v1.3.14
+Updated to Akka.Persistence v1.4.0-beta2
 
-#### 1.3.13 May 01 2019
+#### 1.4.0-beta1 September 21 2019
 
-Updated to Akka.Persistence v1.3.13
+Updated to Akka.Persistence v1.4.0-beta1
 
 #### 1.3.12 April 03 2019
 
 Updated to Akka.Persistence v1.3.12
-
-#### 1.3.11 December 20 2018
-
-Updated to Akka.Persistence v1.3.11
 
 #### 1.3.10 November 03 2018
 
@@ -83,4 +79,3 @@ Support for Akka.NET 1.1 and Akka.Persistence.Query
 
 
  
-

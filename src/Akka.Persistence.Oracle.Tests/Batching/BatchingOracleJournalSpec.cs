@@ -6,6 +6,7 @@
 //-----------------------------------------------------------------------
 
 using Akka.Configuration;
+using Akka.Persistence.Query.Sql;
 using Akka.Persistence.TCK.Journal;
 using Xunit;
 using Xunit.Abstractions;
@@ -15,32 +16,37 @@ namespace Akka.Persistence.Oracle.Tests.Batching
     [Collection("OracleSpec")]
     public class BatchingOracleJournalSpec : JournalSpec
     {
-        private static readonly Config SpecConfig;
+        public static Config Config => ConfigurationFactory.ParseString(@"
+            akka.loglevel = INFO
+            akka.test.single-expect-default = 10s
+            akka.persistence {
+                publish-plugin-commands = on
+                journal {
+                    plugin = ""akka.persistence.journal.oracle""
+                    oracle {
+                        event-adapters {
+                            color-tagger  = ""Akka.Persistence.TCK.Query.ColorFruitTagger, Akka.Persistence.TCK""
+                        }
+                        event-adapter-bindings = {
+                            ""System.String"" = color-tagger
+                        }
+                        class = ""Akka.Persistence.Oracle.Journal.BatchingOracleJournal, Akka.Persistence.Oracle""
+                        plugin-dispatcher = ""akka.actor.default-dispatcher""
+                        schema-name = AKKA_PERSISTENCE_TEST
+                        auto-initialize = on
+                        connection-string = """ + DbUtils.ConnectionString + @"""
+                        refresh-interval = 1s
+                    }
+                }
+            }").WithFallback(SqlReadJournal.DefaultConfiguration());
 
         static BatchingOracleJournalSpec()
         {
-            const string specString = @"
-                akka.test.single-expect-default = 10s
-                akka.persistence {
-                    publish-plugin-commands = on
-                    journal {
-                        plugin = ""akka.persistence.journal.oracle""
-                        oracle {
-                            class = ""Akka.Persistence.Oracle.Journal.BatchingOracleJournal, Akka.Persistence.Oracle""
-                            plugin-dispatcher = ""akka.actor.default-dispatcher""
-                            schema-name = AKKA_PERSISTENCE_TEST
-                            auto-initialize = on
-                            connection-string-name = ""TestDb""
-                            refresh-interval = 1s
-                        }
-                    }
-                }";
-
-            SpecConfig = ConfigurationFactory.ParseString(specString);
+            DbUtils.Initialize();
         }
 
         public BatchingOracleJournalSpec(ITestOutputHelper output)
-            : base(SpecConfig, "BatchingOracleJournalSpec", output)
+            : base(Config, "BatchingOracleJournalSpec", output)
         {
             Initialize();
         }

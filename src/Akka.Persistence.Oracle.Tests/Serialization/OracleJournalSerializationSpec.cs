@@ -26,10 +26,15 @@ namespace Akka.Persistence.Oracle.Tests.Serialization
                         metadata-table-name = METADATA
                         schema-name = AKKA_PERSISTENCE_TEST
                         auto-initialize = on
-                        connection-string-name = ""TestDb""
+                        connection-string = """ + DbUtils.ConnectionString + @"""
                     }
                 }
             }");
+
+        static OracleJournalSerializationSpec()
+        {
+            DbUtils.Initialize();
+        }
 
         public OracleJournalSerializationSpec(ITestOutputHelper output)
             : base(Config, nameof(OracleJournalSerializationSpec), output)

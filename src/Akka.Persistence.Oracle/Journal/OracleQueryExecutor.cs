@@ -88,8 +88,6 @@ FROM (
 )
 WHERE RN <= :Take";
 
-
-
             InsertEventSql = $@"
 INSERT INTO {Configuration.FullJournalTableName} (
     {Configuration.PersistenceIdColumnName},

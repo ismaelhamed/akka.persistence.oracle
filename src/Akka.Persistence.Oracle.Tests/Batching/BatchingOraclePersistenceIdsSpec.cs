@@ -29,11 +29,16 @@ namespace Akka.Persistence.Oracle.Tests.Batching
                         plugin-dispatcher = ""akka.actor.default-dispatcher""
                         schema-name = AKKA_PERSISTENCE_TEST
                         auto-initialize = on
-                        connection-string-name = ""TestDb""
+                        connection-string = """ + DbUtils.ConnectionString + @"""
                         refresh-interval = 1s
                     }
                 }
             }").WithFallback(SqlReadJournal.DefaultConfiguration());
+
+        static BatchingOraclePersistenceIdsSpec()
+        {
+            DbUtils.Initialize();
+        }
 
         public BatchingOraclePersistenceIdsSpec(ITestOutputHelper output)
             : base(Config, nameof(BatchingOraclePersistenceIdsSpec), output)
