@@ -37,38 +37,38 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Akka, Version=1.4.7.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Akka.1.4.7\lib\netstandard2.0\Akka.dll</HintPath>
+    <Reference Include="Akka, Version=1.4.8.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Akka.1.4.8\lib\netstandard2.0\Akka.dll</HintPath>
     </Reference>
-    <Reference Include="Akka.Persistence, Version=1.4.7.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Akka.Persistence.1.4.7\lib\netstandard2.0\Akka.Persistence.dll</HintPath>
+    <Reference Include="Akka.Persistence, Version=1.4.8.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Akka.Persistence.1.4.8\lib\netstandard2.0\Akka.Persistence.dll</HintPath>
     </Reference>
-    <Reference Include="Akka.Persistence.Query, Version=1.4.7.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Akka.Persistence.Query.1.4.7\lib\netstandard2.0\Akka.Persistence.Query.dll</HintPath>
+    <Reference Include="Akka.Persistence.Query, Version=1.4.8.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Akka.Persistence.Query.1.4.8\lib\netstandard2.0\Akka.Persistence.Query.dll</HintPath>
     </Reference>
-    <Reference Include="Akka.Persistence.Query.Sql, Version=1.4.7.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Akka.Persistence.Query.Sql.1.4.7\lib\netstandard2.0\Akka.Persistence.Query.Sql.dll</HintPath>
+    <Reference Include="Akka.Persistence.Query.Sql, Version=1.4.8.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Akka.Persistence.Query.Sql.1.4.8\lib\netstandard2.0\Akka.Persistence.Query.Sql.dll</HintPath>
     </Reference>
-    <Reference Include="Akka.Persistence.Sql.Common, Version=1.4.7.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Akka.Persistence.Sql.Common.1.4.7\lib\netstandard2.0\Akka.Persistence.Sql.Common.dll</HintPath>
+    <Reference Include="Akka.Persistence.Sql.Common, Version=1.4.8.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Akka.Persistence.Sql.Common.1.4.8\lib\netstandard2.0\Akka.Persistence.Sql.Common.dll</HintPath>
     </Reference>
-    <Reference Include="Akka.Persistence.Sql.TestKit, Version=1.4.7.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Akka.Persistence.Sql.TestKit.1.4.7\lib\netstandard2.0\Akka.Persistence.Sql.TestKit.dll</HintPath>
+    <Reference Include="Akka.Persistence.Sql.TestKit, Version=1.4.8.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Akka.Persistence.Sql.TestKit.1.4.8\lib\netstandard2.0\Akka.Persistence.Sql.TestKit.dll</HintPath>
     </Reference>
-    <Reference Include="Akka.Persistence.TCK, Version=1.4.7.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Akka.Persistence.TCK.1.4.7\lib\netstandard2.0\Akka.Persistence.TCK.dll</HintPath>
+    <Reference Include="Akka.Persistence.TCK, Version=1.4.8.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Akka.Persistence.TCK.1.4.8\lib\netstandard2.0\Akka.Persistence.TCK.dll</HintPath>
     </Reference>
-    <Reference Include="Akka.Streams, Version=1.4.7.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Akka.Streams.1.4.7\lib\netstandard2.0\Akka.Streams.dll</HintPath>
+    <Reference Include="Akka.Streams, Version=1.4.8.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Akka.Streams.1.4.8\lib\netstandard2.0\Akka.Streams.dll</HintPath>
     </Reference>
-    <Reference Include="Akka.Streams.TestKit, Version=1.4.7.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Akka.Streams.TestKit.1.4.7\lib\netstandard2.0\Akka.Streams.TestKit.dll</HintPath>
+    <Reference Include="Akka.Streams.TestKit, Version=1.4.8.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Akka.Streams.TestKit.1.4.8\lib\netstandard2.0\Akka.Streams.TestKit.dll</HintPath>
     </Reference>
-    <Reference Include="Akka.TestKit, Version=1.4.7.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Akka.TestKit.1.4.7\lib\netstandard2.0\Akka.TestKit.dll</HintPath>
+    <Reference Include="Akka.TestKit, Version=1.4.8.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Akka.TestKit.1.4.8\lib\netstandard2.0\Akka.TestKit.dll</HintPath>
     </Reference>
-    <Reference Include="Akka.TestKit.Xunit2, Version=1.4.7.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Akka.TestKit.Xunit2.1.4.7\lib\netstandard2.0\Akka.TestKit.Xunit2.dll</HintPath>
+    <Reference Include="Akka.TestKit.Xunit2, Version=1.4.8.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Akka.TestKit.Xunit2.1.4.8\lib\netstandard2.0\Akka.TestKit.Xunit2.dll</HintPath>
     </Reference>
     <Reference Include="FluentAssertions, Version=4.14.0.0, Culture=neutral, PublicKeyToken=33f2691a05b67b6a, processorArchitecture=MSIL">
       <HintPath>..\packages\FluentAssertions.4.14.0\lib\net45\FluentAssertions.dll</HintPath>
@@ -76,14 +76,14 @@
     <Reference Include="FluentAssertions.Core, Version=4.14.0.0, Culture=neutral, PublicKeyToken=33f2691a05b67b6a, processorArchitecture=MSIL">
       <HintPath>..\packages\FluentAssertions.4.14.0\lib\net45\FluentAssertions.Core.dll</HintPath>
     </Reference>
-    <Reference Include="Google.Protobuf, Version=3.12.1.0, Culture=neutral, PublicKeyToken=a7d26565bac4d604, processorArchitecture=MSIL">
-      <HintPath>..\packages\Google.Protobuf.3.12.1\lib\net45\Google.Protobuf.dll</HintPath>
+    <Reference Include="Google.Protobuf, Version=3.12.3.0, Culture=neutral, PublicKeyToken=a7d26565bac4d604, processorArchitecture=MSIL">
+      <HintPath>..\packages\Google.Protobuf.3.12.3\lib\net45\Google.Protobuf.dll</HintPath>
     </Reference>
     <Reference Include="Newtonsoft.Json, Version=12.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <HintPath>..\packages\Newtonsoft.Json.12.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
     </Reference>
     <Reference Include="Oracle.ManagedDataAccess, Version=2.0.19.1, Culture=neutral, PublicKeyToken=89b483f429c47342, processorArchitecture=MSIL">
-      <HintPath>..\packages\Oracle.ManagedDataAccess.Core.2.19.60\lib\netstandard2.0\Oracle.ManagedDataAccess.dll</HintPath>
+      <HintPath>..\packages\Oracle.ManagedDataAccess.Core.2.19.70\lib\netstandard2.0\Oracle.ManagedDataAccess.dll</HintPath>
     </Reference>
     <Reference Include="Reactive.Streams, Version=1.0.2.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\Reactive.Streams.1.0.2\lib\net45\Reactive.Streams.dll</HintPath>
