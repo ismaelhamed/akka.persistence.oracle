@@ -51,7 +51,7 @@ namespace Akka.Persistence.Oracle.Journal
                 e.{conventions.PayloadColumnName} AS Payload, 
                 e.{conventions.SerializerIdColumnName} AS SerializerId";
 
-            AllPersistenceIdsSql = $@"
+            AllPersistenceIdsSql = $@"                
 SELECT DISTINCT e.{conventions.PersistenceIdColumnName} AS PersistenceId 
 FROM {conventions.FullJournalTableName} e";
 
@@ -268,8 +268,6 @@ END;")
             var toSequenceNr = req.ToSequenceNr;
             var persistenceId = req.PersistenceId;
 
-            NotifyNewPersistenceIdAdded(persistenceId);
-
             try
             {
                 var highestSequenceNr = await ReadHighestSequenceNr(persistenceId, command);
@@ -352,8 +350,6 @@ END;")
                 : req.PersistentActor;
             var persistenceId = req.PersistenceId;
 
-            NotifyNewPersistenceIdAdded(persistenceId);
-
             try
             {
                 var highestSequenceNr = await ReadHighestSequenceNr(persistenceId, command);
@@ -374,6 +370,7 @@ END;")
                         var persistent = ReadEvent(reader);
                         if (persistent.IsDeleted)
                         {
+                            // old records from pre 1.5 may still have the IsDeleted flag
                             continue;
                         }
 

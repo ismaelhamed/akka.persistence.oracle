@@ -16,7 +16,7 @@ namespace Akka.Persistence.Oracle.Tests.Batching
     [Collection("OracleSpec")]
     public class BatchingOracleJournalSpec : JournalSpec
     {
-        public static Config Config => ConfigurationFactory.ParseString(@"
+        public new static Config Config => ConfigurationFactory.ParseString(@"
             akka.loglevel = INFO
             akka.test.single-expect-default = 10s
             akka.persistence {

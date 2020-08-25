@@ -8,18 +8,15 @@
   <PropertyGroup Condition="'$(OS)' != 'Windows_NT'">
     <TargetFramework>net461</TargetFramework>
   </PropertyGroup>
+  <ItemGroup>
+    <Compile Remove="JournalPerfSpec2.cs" />
+  </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Akka" Version="1.4.8" />
-    <PackageReference Include="Akka.Persistence" Version="1.4.8" />
-    <PackageReference Include="Akka.Persistence.Sql.Common" Version="1.4.8" />
-    <PackageReference Include="Akka.Persistence.Sql.TestKit" Version="1.4.8" />
-    <PackageReference Include="Akka.Streams" Version="1.4.8" />
-    <PackageReference Include="Akka.Streams.TestKit" Version="1.4.8" />
-    <PackageReference Include="Akka.TestKit" Version="1.4.8" />
+    <PackageReference Include="Akka.Persistence.Sql.TestKit" Version="1.4.10" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Xml" Version="2.2.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.2.0" />
-    <PackageReference Include="Oracle.ManagedDataAccess.Core" Version="2.19.70" />
+    <PackageReference Include="Oracle.ManagedDataAccess.Core" Version="2.19.80" />
     <PackageReference Include="xunit" Version="2.4.1" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.4.1">
       <PrivateAssets>all</PrivateAssets>
