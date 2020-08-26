@@ -28,6 +28,8 @@ namespace Akka.Persistence.Oracle.Journal
         protected override string UpdateSequenceNrSql { get; }
         protected override string ByPersistenceIdSql { get; }
         protected override string ByTagSql { get; }
+        protected override string AllEventsSql { get; }
+        protected override string HighestOrderingSql { get; }
         protected override string InsertEventSql { get; }
         protected override string CreateEventsJournalSql { get; }
         protected override string CreateMetaTableSql { get; }
@@ -87,6 +89,16 @@ FROM (
     WHERE e.{Configuration.OrderingColumnName} > :Ordering AND e.{Configuration.TagsColumnName} LIKE :Tag
 )
 WHERE RN <= :Take";
+
+            AllEventsSql = $@"
+SELECT {allEventColumnNames}, e.{Configuration.OrderingColumnName} as Ordering
+FROM {Configuration.FullJournalTableName} e
+WHERE e.{Configuration.OrderingColumnName} > :Ordering
+ORDER BY {Configuration.OrderingColumnName} ASC";
+
+            HighestOrderingSql = $@"
+SELECT MAX(e.{Configuration.OrderingColumnName}) as Ordering
+FROM {Configuration.FullJournalTableName} e";
 
             InsertEventSql = $@"
 INSERT INTO {Configuration.FullJournalTableName} (
@@ -298,6 +310,32 @@ END;";
 
                     return maxSequenceNr;
                 }
+            }
+        }
+
+        public override async Task<long> SelectAllEventsAsync(DbConnection connection, CancellationToken cancellationToken, long fromOffset, long toOffset, long max, Action<ReplayedEvent> callback)
+        {
+            using (var command = (OracleCommand)GetCommand(connection, AllEventsSql))
+            {
+                var take = Math.Min(toOffset - fromOffset, max);
+                
+                AddParameter(command, ":Ordering", OracleDbType.Int64, fromOffset);
+                AddParameter(command, ":Take", OracleDbType.Int64, take);
+
+                using (var reader = await command.ExecuteReaderAsync(cancellationToken))
+                {
+                    while (await reader.ReadAsync(cancellationToken))
+                    {
+                        var persistent = ReadEvent(reader);
+                        var ordering = reader.GetInt64(OrderingIndex);
+                        callback(new ReplayedEvent(persistent, ordering));
+                    }
+                }
+            }
+
+            using (var command = (OracleCommand)GetCommand(connection, HighestOrderingSql))
+            {
+                return await command.ExecuteScalarAsync(cancellationToken) as long? ?? 0L;
             }
         }
 

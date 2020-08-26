@@ -41,7 +41,7 @@ namespace Akka.Persistence.Oracle.Journal
         }
 
         protected override DbConnection CreateDbConnection(string connectionString) => new OracleConnection(connectionString);
-        
+
         protected override string JournalConfigPath => OracleJournalSettings.ConfigPath;
         public override IJournalQueryExecutor QueryExecutor { get; }
     }

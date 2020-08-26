@@ -30,6 +30,8 @@ namespace Akka.Persistence.Oracle.Journal
         protected override string UpdateSequenceNrSql { get; }
         protected override string ByPersistenceIdSql { get; }
         protected override string ByTagSql { get; }
+        protected override string AllEventsSql { get; }
+        protected override string HighestOrderingSql { get; }
         protected override string InsertEventSql { get; }
 
         public BatchingOracleJournal(Config config)
@@ -94,6 +96,26 @@ FROM (
     WHERE e.{conventions.OrderingColumnName} > :Ordering AND e.{conventions.TagsColumnName} LIKE :Tag
 )
 WHERE RN <= :Take";
+            
+        AllEventsSql = $@"
+SELECT {conventions.PersistenceIdColumnName} AS PersistenceId,
+    {conventions.SequenceNrColumnName} AS SequenceNr, 
+    {conventions.TimestampColumnName} AS Timestamp, 
+    {conventions.IsDeletedColumnName} AS IsDeleted, 
+    {conventions.ManifestColumnName} AS Manifest, 
+    {conventions.PayloadColumnName} AS Payload, 
+    {conventions.SerializerIdColumnName} AS SerializerId,
+    {conventions.OrderingColumnName} AS Ordering
+FROM (
+    SELECT {allEventColumnNames}, e.{conventions.OrderingColumnName} as Ordering, ROW_NUMBER() OVER (ORDER BY e.{conventions.OrderingColumnName} ASC) AS RN
+    FROM {conventions.FullJournalTableName} e
+    WHERE e.{conventions.OrderingColumnName} > :Ordering
+)
+WHERE RN <= :Take";
+
+        HighestOrderingSql = $@"
+SELECT MAX(e.{conventions.OrderingColumnName}) as Ordering
+FROM {conventions.FullJournalTableName} e";            
 
             InsertEventSql = $@"
 INSERT INTO {conventions.FullJournalTableName} (
@@ -339,6 +361,50 @@ END;")
             catch (Exception cause)
             {
                 replyTo.Tell(new ReplayMessagesFailure(cause));
+            }
+        }
+        
+        protected override async Task HandleReplayAllMessages(ReplayAllEvents req, OracleCommand command)
+        {
+            var replyTo = req.ReplyTo;
+
+            try
+            {
+                var toOffset = req.ToOffset;
+                var fromOffset = req.FromOffset;
+                var max = req.Max;
+                var take = Math.Min(toOffset - fromOffset, max);
+
+                command.CommandText = HighestOrderingSql;
+                command.Parameters.Clear();
+                
+                var maxOrdering = await command.ExecuteScalarAsync() as long? ?? 0L;
+
+                command.CommandText = AllEventsSql;
+                command.Parameters.Clear();
+                
+                AddParameter(command, ":Ordering", OracleDbType.Int64, fromOffset);
+                AddParameter(command, ":Take", OracleDbType.Int64, take);
+
+                using (var reader = await command.ExecuteReaderAsync())
+                {
+                    while (await reader.ReadAsync())
+                    {
+                        var persistent = ReadEvent(reader);
+                        var ordering = reader.GetInt64(OrderingIndex);
+
+                        foreach (var adapted in AdaptFromJournal(persistent))
+                        {
+                            replyTo.Tell(new ReplayedEvent(adapted, ordering), ActorRefs.NoSender);
+                        }
+                    }
+                }
+
+                replyTo.Tell(new EventReplaySuccess(maxOrdering));
+            }
+            catch (Exception cause)
+            {
+                replyTo.Tell(new EventReplayFailure(cause));
             }
         }
 
