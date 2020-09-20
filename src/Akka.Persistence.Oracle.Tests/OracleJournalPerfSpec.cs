@@ -42,7 +42,7 @@ namespace Akka.Persistence.Oracle.Tests
         {
             EventsCount = 1000;
             ExpectDuration = TimeSpan.FromMinutes(10);
-            MeasurementIterations = 1;
+            MeasurementIterations = 10;
         }
 
         protected override void AfterAll()
