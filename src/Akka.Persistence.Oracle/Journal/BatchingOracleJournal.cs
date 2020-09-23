@@ -53,9 +53,13 @@ namespace Akka.Persistence.Oracle.Journal
                 e.{conventions.PayloadColumnName} AS Payload, 
                 e.{conventions.SerializerIdColumnName} AS SerializerId";
 
-            AllPersistenceIdsSql = $@"                
-SELECT DISTINCT e.{conventions.PersistenceIdColumnName} AS PersistenceId 
-FROM {conventions.FullJournalTableName} e";
+            AllPersistenceIdsSql = $@"       
+SELECT DISTINCT u.Id as PersistenceId 
+FROM (     
+    SELECT DISTINCT e.{conventions.PersistenceIdColumnName} AS Id FROM {conventions.FullJournalTableName} e WHERE e.{conventions.OrderingColumnName} > :Ordering
+    UNION
+    SELECT DISTINCT e.{conventions.PersistenceIdColumnName} as Id FROM {conventions.FullMetaTableName} e
+) u";
 
             HighestSequenceNrSql = $@"
 SELECT MAX(u.SeqNr) AS SequenceNr 
@@ -277,12 +281,21 @@ END;")
         protected override async Task<long> ReadHighestSequenceNr(string persistenceId, OracleCommand command)
         {
             command.CommandText = HighestSequenceNrSql;
-
             command.Parameters.Clear();
+            
             AddParameter(command, ":PersistenceId", OracleDbType.NVarchar2, persistenceId);
 
             var result = await command.ExecuteScalarAsync();
             return result is decimal ? Convert.ToInt64(result) : 0L;
+        }
+
+        protected override async Task<long> ReadHighestSequenceNr(OracleCommand command)
+        {
+            command.CommandText = HighestOrderingSql;
+            command.Parameters.Clear();
+
+            var result = await command.ExecuteScalarAsync();
+            return result is long ? Convert.ToInt64(result) : 0L;
         }
 
         protected override async Task HandleDeleteMessagesTo(DeleteMessagesTo req, OracleCommand command)
@@ -455,6 +468,24 @@ END;")
                 var response = new ReplayMessagesFailure(cause);
                 replyTo.Tell(response, ActorRefs.NoSender);
             }
+        }
+
+        protected override async Task HandleSelectCurrentPersistenceIds(SelectCurrentPersistenceIds message, OracleCommand command)
+        {
+            var highestOrderingNumber = await ReadHighestSequenceNr(command);
+
+            var result = new List<string>(256);
+            command.CommandText = AllPersistenceIdsSql;
+            command.Parameters.Clear();
+            AddParameter(command, ":Ordering", OracleDbType.Int64, message.Offset);
+
+            var reader = await command.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                result.Add(reader.GetString(0));
+            }
+
+            message.ReplyTo.Tell(new CurrentPersistenceIds(result, highestOrderingNumber));
         }
     }
 }

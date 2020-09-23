@@ -46,9 +46,13 @@ namespace Akka.Persistence.Oracle.Journal
                 e.{Configuration.PayloadColumnName} AS Payload,
                 e.{Configuration.SerializerIdColumnName} AS SerializerId";
 
-            AllPersistenceIdsSql = $@"
-SELECT DISTINCT e.{Configuration.PersistenceIdColumnName} AS PersistenceId 
-FROM {Configuration.FullJournalTableName} e";
+            AllPersistenceIdsSql = $@"       
+SELECT DISTINCT u.Id as PersistenceId 
+FROM (     
+    SELECT DISTINCT e.{Configuration.PersistenceIdColumnName} AS Id FROM {Configuration.FullJournalTableName} e WHERE e.{Configuration.OrderingColumnName} > :Ordering
+    UNION
+    SELECT DISTINCT e.{Configuration.PersistenceIdColumnName} as Id FROM {Configuration.FullMetaTableName} e
+) u";
 
             HighestSequenceNrSql = $@"
 SELECT MAX(u.SeqNr) AS SequenceNr 
@@ -182,11 +186,11 @@ BEGIN
 END;";
         }
 
-        protected override DbCommand CreateCommand(DbConnection connection) => new OracleCommand { Connection = (OracleConnection)connection, BindByName = true };
+        protected override DbCommand CreateCommand(DbConnection connection) => new OracleCommand {Connection = (OracleConnection) connection, BindByName = true};
 
         private static void AddParameter(DbCommand command, string parameterName, OracleDbType parameterType, object value)
         {
-            var parameter = ((OracleCommand)command).CreateParameter();
+            var parameter = ((OracleCommand) command).CreateParameter();
             parameter.ParameterName = parameterName;
             parameter.OracleDbType = parameterType;
             parameter.Value = value;
@@ -209,13 +213,13 @@ END;";
                 var type = Type.GetType(manifest, true);
                 var deserializer = Serialization.FindSerializerForType(type, Configuration.DefaultSerializer);
                 // TODO: hack. Replace when https://github.com/akkadotnet/akka.net/issues/3811
-                deserialized = Akka.Serialization.Serialization.WithTransport(Serialization.System, () => deserializer.FromBinary((byte[])payload, type));
+                deserialized = Akka.Serialization.Serialization.WithTransport(Serialization.System, () => deserializer.FromBinary((byte[]) payload, type));
             }
             else
             {
                 var serializerId = reader.GetInt32(SerializerIdIndex);
                 // TODO: hack. Replace when https://github.com/akkadotnet/akka.net/issues/3811
-                deserialized = Serialization.Deserialize((byte[])payload, serializerId, manifest);
+                deserialized = Serialization.Deserialize((byte[]) payload, serializerId, manifest);
             }
 
             return new Persistent(deserialized, sequenceNr, persistenceId, manifest, isDeleted, ActorRefs.NoSender);
@@ -259,6 +263,7 @@ END;";
                 {
                     tagBuilder.Append(tag).Append(';');
                 }
+
                 AddParameter(command, ":Tag", OracleDbType.NVarchar2, tagBuilder.ToString());
             }
             else
@@ -269,7 +274,7 @@ END;";
 
         public override async Task SelectByPersistenceIdAsync(DbConnection connection, CancellationToken cancellationToken, string persistenceId, long fromSequenceNr, long toSequenceNr, long max, Action<IPersistentRepresentation> callback)
         {
-            using (var command = (OracleCommand)GetCommand(connection, ByPersistenceIdSql))
+            using (var command = (OracleCommand) GetCommand(connection, ByPersistenceIdSql))
             {
                 AddParameter(command, ":PersistenceId", OracleDbType.NVarchar2, persistenceId);
                 AddParameter(command, ":FromSequenceNr", OracleDbType.Int64, fromSequenceNr);
@@ -289,7 +294,7 @@ END;";
 
         public override async Task<long> SelectByTagAsync(DbConnection connection, CancellationToken cancellationToken, string tag, long fromOffset, long toOffset, long max, Action<ReplayedTaggedMessage> callback)
         {
-            using (var command = (OracleCommand)GetCommand(connection, ByTagSql))
+            using (var command = (OracleCommand) GetCommand(connection, ByTagSql))
             {
                 var take = Math.Min(toOffset - fromOffset, max);
 
@@ -315,10 +320,16 @@ END;";
 
         public override async Task<long> SelectAllEventsAsync(DbConnection connection, CancellationToken cancellationToken, long fromOffset, long toOffset, long max, Action<ReplayedEvent> callback)
         {
-            using (var command = (OracleCommand)GetCommand(connection, AllEventsSql))
+            long maxOrdering;
+            using (var command = GetCommand(connection, HighestOrderingSql))
+            {
+                maxOrdering = await command.ExecuteScalarAsync(cancellationToken) as long? ?? 0L;
+            }
+            
+            using (var command = (OracleCommand) GetCommand(connection, AllEventsSql))
             {
                 var take = Math.Min(toOffset - fromOffset, max);
-                
+
                 AddParameter(command, ":Ordering", OracleDbType.Int64, fromOffset);
                 AddParameter(command, ":Take", OracleDbType.Int64, take);
 
@@ -332,16 +343,13 @@ END;";
                     }
                 }
             }
-
-            using (var command = (OracleCommand)GetCommand(connection, HighestOrderingSql))
-            {
-                return await command.ExecuteScalarAsync(cancellationToken) as long? ?? 0L;
-            }
+            
+            return maxOrdering;
         }
 
         public override async Task<long> SelectHighestSequenceNrAsync(DbConnection connection, CancellationToken cancellationToken, string persistenceId)
         {
-            using (var command = (OracleCommand)GetCommand(connection, HighestSequenceNrSql))
+            using (var command = (OracleCommand) GetCommand(connection, HighestSequenceNrSql))
             {
                 AddParameter(command, ":PersistenceId", OracleDbType.NVarchar2, persistenceId);
 
@@ -388,6 +396,34 @@ END;";
                         tx.Commit();
                     }
                 }
+            }
+        }
+
+        public override async Task<ImmutableArray<string>> SelectAllPersistenceIdsAsync(DbConnection connection, CancellationToken cancellationToken, long offset)
+        {
+            using (var command = GetCommand(connection, AllPersistenceIdsSql))
+            {
+                AddParameter(command, ":Ordering", OracleDbType.Int64, offset);
+
+                using (var reader = await command.ExecuteReaderAsync(cancellationToken))
+                {
+                    var builder = ImmutableArray.CreateBuilder<string>();
+                    while (await reader.ReadAsync(cancellationToken))
+                    {
+                        builder.Add(reader.GetString(0));
+                    }
+
+                    return builder.ToImmutable();
+                }
+            }
+        }
+
+        public override async Task<long> SelectHighestSequenceNrAsync(DbConnection connection, CancellationToken cancellationToken)
+        {
+            using (var command = GetCommand(connection, HighestOrderingSql))
+            {
+                var result = await command.ExecuteScalarAsync(cancellationToken);
+                return result is long ? Convert.ToInt64(result) : 0L;
             }
         }
     }
