@@ -18,19 +18,12 @@ namespace Akka.Persistence.Oracle.Tests.Query
     public class OracleAllEventsSpec : AllEventsSpec
     {
         private static Config Config => ConfigurationFactory.ParseString(@"
-            akka.loglevel = INFO
             akka.test.single-expect-default = 10s
             akka.persistence {
                 publish-plugin-commands = on
                 journal {
                     plugin = ""akka.persistence.journal.oracle""
                     oracle {
-                        event-adapters {
-                            color-tagger  = ""Akka.Persistence.TCK.Query.ColorFruitTagger, Akka.Persistence.TCK""
-                        }
-                        event-adapter-bindings = {
-                            ""System.String"" = color-tagger
-                        }
                         class = ""Akka.Persistence.Oracle.Journal.OracleJournal, Akka.Persistence.Oracle""
                         plugin-dispatcher = ""akka.actor.default-dispatcher""
                         table-name = EVENTJOURNAL

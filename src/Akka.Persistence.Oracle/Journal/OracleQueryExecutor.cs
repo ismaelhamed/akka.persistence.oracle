@@ -30,6 +30,7 @@ namespace Akka.Persistence.Oracle.Journal
         protected override string ByTagSql { get; }
         protected override string AllEventsSql { get; }
         protected override string HighestOrderingSql { get; }
+        protected override string HighestTagOrderingSql { get; }
         protected override string InsertEventSql { get; }
         protected override string CreateEventsJournalSql { get; }
         protected override string CreateMetaTableSql { get; }
@@ -103,6 +104,11 @@ ORDER BY {Configuration.OrderingColumnName} ASC";
             HighestOrderingSql = $@"
 SELECT MAX(e.{Configuration.OrderingColumnName}) as Ordering
 FROM {Configuration.FullJournalTableName} e";
+
+            HighestTagOrderingSql = $@"
+SELECT MAX(e.{Configuration.OrderingColumnName}) as Ordering
+FROM {Configuration.FullJournalTableName} e
+WHERE e.{Configuration.OrderingColumnName} > :Ordering AND e.{Configuration.TagsColumnName} LIKE :Tag";
 
             InsertEventSql = $@"
 INSERT INTO {Configuration.FullJournalTableName} (
@@ -304,17 +310,21 @@ END;";
 
                 using (var reader = await command.ExecuteReaderAsync(cancellationToken))
                 {
-                    var maxSequenceNr = 0L;
                     while (await reader.ReadAsync(cancellationToken))
                     {
                         var persistent = ReadEvent(reader);
                         var ordering = reader.GetInt64(OrderingIndex);
-                        maxSequenceNr = Math.Max(maxSequenceNr, persistent.SequenceNr);
                         callback(new ReplayedTaggedMessage(persistent, tag, ordering));
                     }
-
-                    return maxSequenceNr;
                 }
+            }
+            
+            using (var command = (OracleCommand) GetCommand(connection, HighestTagOrderingSql))
+            {
+                AddParameter(command, ":Ordering", OracleDbType.Int64, fromOffset);
+                AddParameter(command, ":Tag", OracleDbType.NVarchar2, "%;" + tag + ";%");
+                var result = await command.ExecuteScalarAsync(cancellationToken);
+                return result is decimal ? Convert.ToInt64(result) : 0L;
             }
         }
 
