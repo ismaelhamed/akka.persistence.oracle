@@ -1,3 +1,7 @@
+#### 1.4.13 December 18 2020
+
+Updated to Akka.Persistence v1.4.13
+
 #### 1.4.12 November 28 2020
 
 Updated to Akka.Persistence v1.4.12
