@@ -222,6 +222,7 @@ END;")
         {
             var persistenceId = reader.GetString(PersistenceIdIndex);
             var sequenceNr = reader.GetInt64(SequenceNrIndex);
+            var timestamp = reader.GetInt64(TimestampIndex);
             var isDeleted = Convert.ToBoolean(reader.GetInt16(IsDeletedIndex));
             var manifest = reader.GetString(ManifestIndex).Trim(); // HACK
             var payload = reader[PayloadIndex];
@@ -239,7 +240,7 @@ END;")
                 deserialized = serialization.Deserialize((byte[])payload, serializerId, manifest);
             }
 
-            return new Persistent(deserialized, sequenceNr, persistenceId, manifest, isDeleted, ActorRefs.NoSender);
+            return new Persistent(deserialized, sequenceNr, persistenceId, manifest, isDeleted, ActorRefs.NoSender, null, timestamp);
         }
 
         protected override void WriteEvent(OracleCommand command, IPersistentRepresentation persistent, string tags = "")

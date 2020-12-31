@@ -228,7 +228,7 @@ END;";
                 deserialized = Serialization.Deserialize((byte[]) payload, serializerId, manifest);
             }
 
-            return new Persistent(deserialized, sequenceNr, persistenceId, manifest, isDeleted, ActorRefs.NoSender);
+            return new Persistent(deserialized, sequenceNr, persistenceId, manifest, isDeleted, ActorRefs.NoSender, null, timestamp);
         }
 
         protected override void WriteEvent(DbCommand command, IPersistentRepresentation e, IImmutableSet<string> tags)
@@ -256,7 +256,7 @@ END;";
 
             AddParameter(command, ":PersistenceId", OracleDbType.NVarchar2, e.PersistenceId);
             AddParameter(command, ":SequenceNr", OracleDbType.Int64, e.SequenceNr);
-            AddParameter(command, ":Timestamp", OracleDbType.Int64, TimestampProvider.GenerateTimestamp(e));
+            AddParameter(command, ":Timestamp", OracleDbType.Int64, e.Timestamp);
             AddParameter(command, ":IsDeleted", OracleDbType.Int16, e.IsDeleted);
             AddParameter(command, ":Manifest", OracleDbType.NVarchar2, manifest);
             AddParameter(command, ":Payload", OracleDbType.Blob, binary);
