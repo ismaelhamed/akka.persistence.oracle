@@ -99,9 +99,10 @@ FROM (
     FROM {conventions.FullJournalTableName} e
     WHERE e.{conventions.OrderingColumnName} > :Ordering AND e.{conventions.TagsColumnName} LIKE :Tag
 )
-WHERE RN <= :Take";
-            
-        AllEventsSql = $@"
+WHERE RN <= :Take
+ORDER BY {conventions.OrderingColumnName} ASC";
+
+            AllEventsSql = $@"
 SELECT {conventions.PersistenceIdColumnName} AS PersistenceId,
     {conventions.SequenceNrColumnName} AS SequenceNr, 
     {conventions.TimestampColumnName} AS Timestamp, 
@@ -115,11 +116,12 @@ FROM (
     FROM {conventions.FullJournalTableName} e
     WHERE e.{conventions.OrderingColumnName} > :Ordering
 )
-WHERE RN <= :Take";
+WHERE RN <= :Take
+ORDER BY {conventions.OrderingColumnName} ASC";
 
-        HighestOrderingSql = $@"
+            HighestOrderingSql = $@"
 SELECT MAX(e.{conventions.OrderingColumnName}) as Ordering
-FROM {conventions.FullJournalTableName} e";            
+FROM {conventions.FullJournalTableName} e";
 
             InsertEventSql = $@"
 INSERT INTO {conventions.FullJournalTableName} (
@@ -230,9 +232,14 @@ END;")
             object deserialized;
             if (reader.IsDBNull(SerializerIdIndex))
             {
+                // Support old writes that did not set the serializer id
                 var type = Type.GetType(manifest, true);
                 var deserializer = serialization.FindSerializerForType(type, Setup.DefaultSerializer);
-                deserialized = deserializer.FromBinary((byte[])payload, type);
+                // TODO: hack. Replace when https://github.com/akkadotnet/akka.net/issues/3811
+                deserialized = Akka.Serialization.Serialization.WithTransport(
+                    serialization.System,
+                    (deserializer, (byte[])payload, type),
+                    state => state.deserializer.FromBinary(state.Item2, state.type));
             }
             else
             {
@@ -245,45 +252,43 @@ END;")
 
         protected override void WriteEvent(OracleCommand command, IPersistentRepresentation persistent, string tags = "")
         {
-            var payloadType = persistent.Payload.GetType();
-            var serializer = serialization.FindSerializerForType(payloadType, Setup.DefaultSerializer);
+            var serializer = serialization.FindSerializerForType(persistent.Payload.GetType(), Setup.DefaultSerializer);
 
-            // TODO: hack. Replace when https://github.com/akkadotnet/akka.net/issues/3811
-            Akka.Serialization.Serialization.WithTransport(serialization.System, () =>
+            var (binary, manifest) = Akka.Serialization.Serialization.WithTransport(serialization.System, (persistent.Payload, serializer), state =>
             {
-                var manifest = " "; // HACK
+                var (thePayload, theSerializer) = state;
+                var thisManifest = " "; // HACK
+
                 if (serializer is SerializerWithStringManifest stringManifest)
                 {
-                    manifest = stringManifest.Manifest(persistent.Payload);
+                    thisManifest = stringManifest.Manifest(thePayload);
                 }
                 else
                 {
                     if (serializer.IncludeManifest)
                     {
-                        manifest = payloadType.TypeQualifiedName();
+                        thisManifest = thePayload.GetType().TypeQualifiedName();
                     }
                 }
 
-                var binary = serializer.ToBinary(persistent.Payload);
-
-                AddParameter(command, ":PersistenceId", OracleDbType.NVarchar2, persistent.PersistenceId);
-                AddParameter(command, ":SequenceNr", OracleDbType.Int64, persistent.SequenceNr);
-                AddParameter(command, ":Timestamp", OracleDbType.Int64, DateTime.UtcNow.Ticks);
-                AddParameter(command, ":IsDeleted", OracleDbType.Int16, persistent.IsDeleted);
-                AddParameter(command, ":Manifest", OracleDbType.NVarchar2, manifest);
-                AddParameter(command, ":Payload", OracleDbType.Blob, binary);
-                AddParameter(command, ":Tag", OracleDbType.NVarchar2, tags);
-                AddParameter(command, ":SerializerId", OracleDbType.Int32, serializer.Identifier);
-
-                return manifest;
+                return (theSerializer.ToBinary(thePayload), thisManifest);
             });
+
+            AddParameter(command, ":PersistenceId", OracleDbType.NVarchar2, persistent.PersistenceId);
+            AddParameter(command, ":SequenceNr", OracleDbType.Int64, persistent.SequenceNr);
+            AddParameter(command, ":Timestamp", OracleDbType.Int64, persistent.Timestamp);
+            AddParameter(command, ":IsDeleted", OracleDbType.Int16, persistent.IsDeleted);
+            AddParameter(command, ":Manifest", OracleDbType.NVarchar2, manifest);
+            AddParameter(command, ":Payload", OracleDbType.Blob, binary);
+            AddParameter(command, ":Tag", OracleDbType.NVarchar2, tags);
+            AddParameter(command, ":SerializerId", OracleDbType.Int32, serializer.Identifier);
         }
 
         protected override async Task<long> ReadHighestSequenceNr(string persistenceId, OracleCommand command)
         {
             command.CommandText = HighestSequenceNrSql;
             command.Parameters.Clear();
-            
+
             AddParameter(command, ":PersistenceId", OracleDbType.NVarchar2, persistenceId);
 
             var result = await command.ExecuteScalarAsync();
@@ -304,35 +309,24 @@ END;")
             var toSequenceNr = req.ToSequenceNr;
             var persistenceId = req.PersistenceId;
 
-            try
-            {
-                var highestSequenceNr = await ReadHighestSequenceNr(persistenceId, command);
+            var highestSequenceNr = await ReadHighestSequenceNr(persistenceId, command);
 
-                command.CommandText = DeleteBatchSql;
+            command.CommandText = DeleteBatchSql;
+            command.Parameters.Clear();
+            AddParameter(command, ":PersistenceId", OracleDbType.NVarchar2, persistenceId);
+            AddParameter(command, ":ToSequenceNr", OracleDbType.Int64, toSequenceNr);
+
+            await command.ExecuteNonQueryAsync();
+
+            if (highestSequenceNr <= toSequenceNr)
+            {
+                command.CommandText = UpdateSequenceNrSql;
                 command.Parameters.Clear();
+
                 AddParameter(command, ":PersistenceId", OracleDbType.NVarchar2, persistenceId);
-                AddParameter(command, ":ToSequenceNr", OracleDbType.Int64, toSequenceNr);
+                AddParameter(command, ":SequenceNr", OracleDbType.Int64, highestSequenceNr);
 
                 await command.ExecuteNonQueryAsync();
-
-                if (highestSequenceNr <= toSequenceNr)
-                {
-                    command.CommandText = UpdateSequenceNrSql;
-                    command.Parameters.Clear();
-
-                    AddParameter(command, ":PersistenceId", OracleDbType.NVarchar2, persistenceId);
-                    AddParameter(command, ":SequenceNr", OracleDbType.Int64, highestSequenceNr);
-
-                    await command.ExecuteNonQueryAsync();
-                }
-
-                var response = new DeleteMessagesSuccess(toSequenceNr);
-                req.PersistentActor.Tell(response);
-            }
-            catch (Exception cause)
-            {
-                var response = new DeleteMessagesFailure(cause, toSequenceNr);
-                req.PersistentActor.Tell(response, ActorRefs.NoSender);
             }
         }
 
@@ -377,26 +371,24 @@ END;")
                 replyTo.Tell(new ReplayMessagesFailure(cause));
             }
         }
-        
+
         protected override async Task HandleReplayAllMessages(ReplayAllEvents req, OracleCommand command)
         {
             var replyTo = req.ReplyTo;
 
             try
             {
-                var toOffset = req.ToOffset;
                 var fromOffset = req.FromOffset;
-                var max = req.Max;
-                var take = Math.Min(toOffset - fromOffset, max);
+                var take = Math.Min(req.ToOffset - fromOffset, req.Max);
 
                 command.CommandText = HighestOrderingSql;
                 command.Parameters.Clear();
-                
+
                 var maxOrdering = await command.ExecuteScalarAsync() as long? ?? 0L;
 
                 command.CommandText = AllEventsSql;
                 command.Parameters.Clear();
-                
+
                 AddParameter(command, ":Ordering", OracleDbType.Int64, fromOffset);
                 AddParameter(command, ":Take", OracleDbType.Int64, take);
 
@@ -480,10 +472,12 @@ END;")
             command.Parameters.Clear();
             AddParameter(command, ":Ordering", OracleDbType.Int64, message.Offset);
 
-            var reader = await command.ExecuteReaderAsync();
-            while (await reader.ReadAsync())
+            using (var reader = await command.ExecuteReaderAsync())
             {
-                result.Add(reader.GetString(0));
+                while (await reader.ReadAsync())
+                {
+                    result.Add(reader.GetString(0));
+                }
             }
 
             message.ReplyTo.Tell(new CurrentPersistenceIds(result, highestOrderingNumber));
