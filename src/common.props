@@ -1,16 +1,17 @@
 <Project>
   <PropertyGroup>
-    <Copyright>Copyright © 2020 Ismael Hamed</Copyright>
+    <Copyright>Copyright © 2021 Ismael Hamed</Copyright>
     <Authors>Ismael Hamed</Authors>
-    <VersionPrefix>1.4.21</VersionPrefix>
+    <VersionPrefix>1.4.25</VersionPrefix>
     <PackageProjectUrl>https://github.com/ismaelhamed/akka.persistence.oracle</PackageProjectUrl>
-    <PackageReleaseNotes>Updated to Akka.Persistence v1.4.21</PackageReleaseNotes>
+    <PackageReleaseNotes>Updated to Akka.Persistence v1.4.25</PackageReleaseNotes>
     <NoWarn>$(NoWarn);CS1591;xUnit1013</NoWarn>
   </PropertyGroup>
   <PropertyGroup>
+    <OracleManagedVersion>[2.19.120,3.0)</OracleManagedVersion>
     <XunitVersion>2.4.1</XunitVersion>
-    <AkkaVersion>1.4.21-beta1</AkkaVersion>
-    <TestSdkVersion>16.8.3</TestSdkVersion>
+    <AkkaVersion>1.4.25</AkkaVersion>
+    <TestSdkVersion>16.11.0</TestSdkVersion>
     <NetCoreTestVersion>netcoreapp2.1</NetCoreTestVersion>
     <NetFrameworkTestVersion>net461</NetFrameworkTestVersion>
     <NetStandardLibVersion>netstandard2.0</NetStandardLibVersion>
