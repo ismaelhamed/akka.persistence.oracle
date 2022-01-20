@@ -2,20 +2,17 @@
   <PropertyGroup>
     <Copyright>Copyright © 2021 Ismael Hamed</Copyright>
     <Authors>Ismael Hamed</Authors>
-    <VersionPrefix>1.4.26</VersionPrefix>
+    <VersionPrefix>1.4.32</VersionPrefix>
     <PackageProjectUrl>https://github.com/ismaelhamed/akka.persistence.oracle</PackageProjectUrl>
-    <PackageReleaseNotes>Updated to Akka.Persistence v1.4.26</PackageReleaseNotes>
+    <PackageReleaseNotes>Updated to Akka.Persistence v1.4.32, and Oracle Data Provider to v2.19.140</PackageReleaseNotes>
     <NoWarn>$(NoWarn);CS1591;xUnit1013</NoWarn>
   </PropertyGroup>
   <PropertyGroup>
-    <OracleManagedVersion>[2.19.120,3.0)</OracleManagedVersion>
     <XunitVersion>2.4.1</XunitVersion>
-    <AkkaVersion>1.4.26</AkkaVersion>
+    <AkkaVersion>1.4.32</AkkaVersion>
     <TestSdkVersion>16.11.0</TestSdkVersion>
-    <NetCoreTestVersion>netcoreapp2.1</NetCoreTestVersion>
-    <NetFrameworkTestVersion>net461</NetFrameworkTestVersion>
+    <NetCoreTestVersion>netcoreapp3.1</NetCoreTestVersion>
     <NetStandardLibVersion>netstandard2.0</NetStandardLibVersion>
-    <NetFrameworkLibVersion>net452</NetFrameworkLibVersion>
     <AkkaPackageTags>akka;actors;actor model;concurrency;persistence;eventsource;oracle</AkkaPackageTags>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">

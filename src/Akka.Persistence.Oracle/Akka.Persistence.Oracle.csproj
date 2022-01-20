@@ -1,21 +1,25 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project Sdk="Microsoft.NET.Sdk">
-  <Import Project="..\common.props" />
-  <PropertyGroup>
-    <AssemblyTitle>Akka.Persistence.Oracle</AssemblyTitle>
-    <Description>Akka.NET Persistence journal and snapshot store backed by Oracle ODP.NET</Description>
-    <TargetFramework>netstandard2.0</TargetFramework>
-    <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <PackageTags>$(AkkaPackageTags)</PackageTags>
-  </PropertyGroup>
-  <ItemGroup>
-    <None Remove="oracle.conf" />
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="oracle.conf" />
-  </ItemGroup>
-  <ItemGroup>
-	<PackageReference Include="Akka.Persistence.Query.Sql" Version="$(AkkaVersion)" />
-    <PackageReference Include="Oracle.ManagedDataAccess.Core" Version="2.19.130" />
-  </ItemGroup>
+﻿<Project Sdk="Microsoft.NET.Sdk">
+	<Import Project="..\common.props" />
+	
+	<PropertyGroup>
+		<AssemblyTitle>Akka.Persistence.Oracle</AssemblyTitle>
+		<Description>Akka.NET Persistence journal and snapshot store backed by Oracle ODP.NET</Description>
+		<TargetFramework>$(NetStandardLibVersion)</TargetFramework>
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+		<PackageTags>$(AkkaPackageTags)</PackageTags>
+	</PropertyGroup>
+	
+	<ItemGroup>
+		<None Remove="oracle.conf" />
+	</ItemGroup>
+	
+	<ItemGroup>
+		<EmbeddedResource Include="oracle.conf" />
+	</ItemGroup>
+	
+	<ItemGroup>
+		<PackageReference Include="Akka.Persistence.Query.Sql" Version="$(AkkaVersion)" />
+		<PackageReference Include="Oracle.ManagedDataAccess.Core" Version="2.19.140" />
+	</ItemGroup>
+	
 </Project>

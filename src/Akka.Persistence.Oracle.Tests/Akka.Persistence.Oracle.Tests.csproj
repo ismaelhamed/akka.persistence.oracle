@@ -1,38 +1,35 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-  <Import Project="..\common.props" />
-  <PropertyGroup Condition="'$(OS)' == 'Windows_NT'">
-    <TargetFramework>net461</TargetFramework>
-  </PropertyGroup>
+	<Import Project="..\common.props" />
 
-  <!-- disable .NET Framework (Mono) on Linux-->
-  <PropertyGroup Condition="'$(OS)' != 'Windows_NT'">
-    <TargetFramework>net461</TargetFramework>
-  </PropertyGroup>
-  <ItemGroup>
-    <Compile Remove="JournalPerfSpec2.cs" />
-  </ItemGroup>
+	<PropertyGroup>
+		<TargetFramework>$(NetCoreTestVersion)</TargetFramework>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="Akka.Persistence.Sql.TestKit" Version="$(AkkaVersion)" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Xml" Version="2.2.0" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="$(TestSdkVersion)" />
-    <PackageReference Include="Oracle.ManagedDataAccess.Core" Version="2.19.130" />
-    <PackageReference Include="xunit" Version="$(XunitVersion)" />
-    <PackageReference Include="xunit.runner.visualstudio" Version="2.4.3">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
-    <DotNetCliToolReference Include="dotnet-xunit" Version="2.3.1" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\Akka.Persistence.Oracle\Akka.Persistence.Oracle.csproj" />
-  </ItemGroup>
-  <ItemGroup>
-    <Service Include="{82a7f48d-3b50-4b1e-b82e-3ada8210c358}" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Update="AppConfig.xml">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="Akka.Persistence.Sql.TestKit" Version="$(AkkaVersion)" />
+		<PackageReference Include="Microsoft.Extensions.Configuration.Xml" Version="2.2.0" />
+		<PackageReference Include="Microsoft.NET.Test.Sdk" Version="$(TestSdkVersion)" />
+		<PackageReference Include="Oracle.ManagedDataAccess.Core" Version="2.19.140" />
+		<PackageReference Include="xunit" Version="$(XunitVersion)" />
+		<PackageReference Include="xunit.runner.visualstudio" Version="2.4.3">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+		<DotNetCliToolReference Include="dotnet-xunit" Version="2.3.1" />
+	</ItemGroup>
+	
+	<ItemGroup>
+		<ProjectReference Include="..\Akka.Persistence.Oracle\Akka.Persistence.Oracle.csproj" />
+	</ItemGroup>
+	
+	<ItemGroup>
+		<Service Include="{82a7f48d-3b50-4b1e-b82e-3ada8210c358}" />
+	</ItemGroup>
+	
+	<ItemGroup>
+		<None Update="AppConfig.xml">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+	</ItemGroup>
+	
 </Project>
