@@ -4,7 +4,7 @@
 	<PropertyGroup>
 		<AssemblyTitle>Akka.Persistence.Oracle</AssemblyTitle>
 		<Description>Akka.NET Persistence journal and snapshot store backed by Oracle ODP.NET</Description>
-		<TargetFramework>$(NetStandardLibVersion)</TargetFramework>
+		<TargetFrameworks>netstandard2.0;netcoreapp3.1</TargetFrameworks>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<PackageTags>$(AkkaPackageTags)</PackageTags>
 	</PropertyGroup>
@@ -19,7 +19,14 @@
 	
 	<ItemGroup>
 		<PackageReference Include="Akka.Persistence.Query.Sql" Version="$(AkkaVersion)" />
+	</ItemGroup>
+
+	<ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
 		<PackageReference Include="Oracle.ManagedDataAccess.Core" Version="2.19.140" />
+	</ItemGroup>
+
+	<ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp3.1'">
+		<PackageReference Include="Oracle.ManagedDataAccess.Core" Version="3.21.50" />
 	</ItemGroup>
 	
 </Project>

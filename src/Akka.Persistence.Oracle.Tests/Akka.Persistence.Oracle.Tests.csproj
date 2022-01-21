@@ -2,14 +2,13 @@
 	<Import Project="..\common.props" />
 
 	<PropertyGroup>
-		<TargetFramework>$(NetCoreTestVersion)</TargetFramework>
+		<TargetFramework>netcoreapp3.1</TargetFramework>
 	</PropertyGroup>
 
 	<ItemGroup>
 		<PackageReference Include="Akka.Persistence.Sql.TestKit" Version="$(AkkaVersion)" />
 		<PackageReference Include="Microsoft.Extensions.Configuration.Xml" Version="2.2.0" />
 		<PackageReference Include="Microsoft.NET.Test.Sdk" Version="$(TestSdkVersion)" />
-		<PackageReference Include="Oracle.ManagedDataAccess.Core" Version="2.19.140" />
 		<PackageReference Include="xunit" Version="$(XunitVersion)" />
 		<PackageReference Include="xunit.runner.visualstudio" Version="2.4.3">
 			<PrivateAssets>all</PrivateAssets>
