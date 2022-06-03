@@ -1,4 +1,11 @@
-﻿using Akka.Configuration;
+﻿//-----------------------------------------------------------------------
+// <copyright file="OracleJournalPerfSpec.cs" company="Akka.NET Project">
+//     Copyright (C) 2009-2020 Lightbend Inc. <http://www.lightbend.com>
+//     Copyright (C) 2013-2020 .NET Foundation <https://github.com/akkadotnet/akka.net>
+// </copyright>
+//-----------------------------------------------------------------------
+
+using Akka.Configuration;
 using Akka.Persistence.TCK.Journal;
 using Xunit;
 using Xunit.Abstractions;
@@ -18,7 +25,6 @@ namespace Akka.Persistence.Oracle.Tests
                         class = ""Akka.Persistence.Oracle.Journal.OracleJournal, Akka.Persistence.Oracle""                            
                         plugin-dispatcher = ""akka.actor.default-dispatcher""
                         table-name = EVENTJOURNAL
-                        schema-name = AKKA_PERSISTENCE_TEST
                         auto-initialize = on
                         connection-string = """ + DbUtils.ConnectionString + @"""
                     }

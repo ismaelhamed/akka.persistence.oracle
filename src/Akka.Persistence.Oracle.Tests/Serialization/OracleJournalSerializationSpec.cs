@@ -24,7 +24,6 @@ namespace Akka.Persistence.Oracle.Tests.Serialization
                         plugin-dispatcher = ""akka.actor.default-dispatcher""
                         table-name = EVENTJOURNAL
                         metadata-table-name = METADATA
-                        schema-name = AKKA_PERSISTENCE_TEST
                         auto-initialize = on
                         connection-string = """ + DbUtils.ConnectionString + @"""
                     }

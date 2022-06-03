@@ -26,7 +26,6 @@ namespace Akka.Persistence.Oracle.Tests.Batching
                     oracle {
                         class = ""Akka.Persistence.Oracle.Journal.BatchingOracleJournal, Akka.Persistence.Oracle""
                         plugin-dispatcher = ""akka.actor.default-dispatcher""
-                        schema-name = AKKA_PERSISTENCE_TEST
                         auto-initialize = on
                         connection-string = """ + DbUtils.ConnectionString + @"""
                         refresh-interval = 1s

@@ -32,7 +32,6 @@ namespace Akka.Persistence.Oracle.Tests.Query
                         }
                         class = ""Akka.Persistence.Oracle.Journal.OracleJournal, Akka.Persistence.Oracle""
                         plugin-dispatcher = ""akka.actor.default-dispatcher""
-                        schema-name = AKKA_PERSISTENCE_TEST
                         auto-initialize = on
                         connection-string = """ + DbUtils.ConnectionString + @"""
                         refresh-interval = 1s

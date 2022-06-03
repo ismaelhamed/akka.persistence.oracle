@@ -17,7 +17,6 @@ namespace Akka.Persistence.Oracle.Tests.Serialization
                         class = ""Akka.Persistence.Oracle.Snapshot.OracleSnapshotStore, Akka.Persistence.Oracle""
                         plugin-dispatcher = ""akka.actor.default-dispatcher""
                         table-name = SNAPSHOTSTORE
-                        schema-name = AKKA_PERSISTENCE_TEST
                         auto-initialize = on
                         connection-string = """ + DbUtils.ConnectionString + @"""
                     }

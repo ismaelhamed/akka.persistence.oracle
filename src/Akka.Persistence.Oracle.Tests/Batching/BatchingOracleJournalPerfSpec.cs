@@ -25,7 +25,6 @@ namespace Akka.Persistence.Oracle.Tests.Batching
                         class = ""Akka.Persistence.Oracle.Journal.BatchingOracleJournal, Akka.Persistence.Oracle""                            
                         plugin-dispatcher = ""akka.actor.default-dispatcher""
                         table-name = EVENTJOURNAL
-                        schema-name = AKKA_PERSISTENCE_TEST
                         auto-initialize = on
                         connection-string = """ + DbUtils.ConnectionString + @"""
                     }
