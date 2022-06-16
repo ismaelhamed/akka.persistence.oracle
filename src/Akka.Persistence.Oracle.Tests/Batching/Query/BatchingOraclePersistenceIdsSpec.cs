@@ -36,9 +36,9 @@ namespace Akka.Persistence.Oracle.Tests.Batching
                         plugin-dispatcher = ""akka.actor.default-dispatcher""
                         auto-initialize = on
                         connection-string = """ + DbUtils.ConnectionString + @"""
-                        refresh-interval = 1s
                     }
                 }
+                query.journal.sql.refresh-interval = 1s
             }
             akka.test.single-expect-default = 10s")
             .WithFallback(SqlReadJournal.DefaultConfiguration());

@@ -35,9 +35,9 @@ namespace Akka.Persistence.Oracle.Tests.Query
                         table-name = EVENTJOURNAL
                         auto-initialize = on
                         connection-string = """ + DbUtils.ConnectionString + @"""
-                        refresh-interval = 1s
                     }
                 }
+                query.journal.sql.refresh-interval = 1s
             }").WithFallback(SqlReadJournal.DefaultConfiguration());
 
         static OracleEventsByTagSpec()

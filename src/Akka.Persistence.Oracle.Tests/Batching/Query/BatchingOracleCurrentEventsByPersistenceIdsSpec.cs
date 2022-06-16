@@ -28,9 +28,9 @@ namespace Akka.Persistence.Oracle.Tests.Batching
                         plugin-dispatcher = ""akka.actor.default-dispatcher""
                         auto-initialize = on
                         connection-string = """ + DbUtils.ConnectionString + @"""
-                        refresh-interval = 1s
                     }
                 }
+                query.journal.sql.refresh-interval = 1s
             }").WithFallback(SqlReadJournal.DefaultConfiguration());
         
         static BatchingOracleCurrentEventsByPersistenceIdsSpec()
