@@ -5,12 +5,19 @@
 // </copyright>
 //-----------------------------------------------------------------------
 
+using System.Collections.Generic;
+using System.Threading;
+using System;
 using Akka.Configuration;
 using Akka.Persistence.Query;
 using Akka.Persistence.Query.Sql;
 using Akka.Persistence.TCK.Query;
+using Akka.Streams.TestKit;
+using Akka.Util.Internal;
+using FluentAssertions.Extensions;
 using Xunit;
 using Xunit.Abstractions;
+using FluentAssertions;
 
 namespace Akka.Persistence.Oracle.Tests.Query
 {
@@ -50,6 +57,31 @@ namespace Akka.Persistence.Oracle.Tests.Query
         {
             base.Dispose(disposing);
             DbUtils.Clean();
+        }
+
+        [Fact]
+        public override void ReadJournal_AllPersistenceIds_should_find_new_events_after_demand_request()
+        {
+            var queries = ReadJournal.AsInstanceOf<IPersistenceIdsQuery>();
+
+            Setup("h", 1);
+            Setup("i", 1);
+
+            var source = queries.PersistenceIds();
+            var probe = source.RunWith(this.SinkProbe<string>(), Materializer);
+
+            probe.Within(TimeSpan.FromSeconds(10), () =>
+            {
+                probe.Request(1).ExpectNext();
+                return probe.ExpectNoMsg(TimeSpan.FromMilliseconds(100));
+            });
+
+            Setup("j", 1);
+            probe.Within(TimeSpan.FromSeconds(10), () =>
+            {
+                probe.Request(5).ExpectNext();
+                return probe.ExpectNext();
+            });
         }
     }
 }
