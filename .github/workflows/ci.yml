@@ -4,27 +4,31 @@ on:
   push:
     paths-ignore:
       - 'docs/**'
-    branches: 
-      - github-actions
+    branches-ignore:
+      - master
   pull_request:
     branches: [ dev ]
     
 jobs:
   build:
-
     runs-on: ubuntu-latest
+    if: github.repository == 'ismaelhamed/akka.persistence.oracle'
 
     steps:
-    - uses: actions/checkout@v2
+    - name: Checkout
+      uses: actions/checkout@v3
 
     - name: Setup .NET
-      uses: actions/setup-dotnet@v1
+      uses: actions/setup-dotnet@v2
       with:
-        dotnet-version: 5.0.x
+        dotnet-version: 6.0.x
+
     - name: Restore dependencies
       run: dotnet restore
       working-directory: src/
+
     - name: Build
-      run: dotnet build --no-restore  --configuration Release ./src
-    #- name: Test
-    #  run: dotnet test --no-build --verbosity normal ./src
+      run: dotnet build --no-restore --configuration Release ./src
+
+    - name: Test
+      run: dotnet test --no-build --configuration Release --logger GitHubActions ./src
