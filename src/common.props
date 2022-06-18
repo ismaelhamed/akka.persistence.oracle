@@ -2,9 +2,9 @@
   <PropertyGroup>
     <Copyright>Copyright © 2022 Ismael Hamed</Copyright>
     <Authors>Ismael Hamed</Authors>
-    <VersionPrefix>1.4.32</VersionPrefix>
+    <VersionPrefix>1.4.39</VersionPrefix>
     <PackageProjectUrl>https://github.com/ismaelhamed/akka.persistence.oracle</PackageProjectUrl>
-    <PackageReleaseNotes>Updated to Akka.Persistence v1.4.39, Oracle Data Provider to v21.6.1, and Oracle Data Provider for .NET Core to v3.21.50</PackageReleaseNotes>
+    <PackageReleaseNotes>Updated to Akka.Persistence v1.4.39, Oracle Data Provider to v21.6.1, and Oracle Data Provider for .NET Core to v3.21.61</PackageReleaseNotes>
     <NoWarn>$(NoWarn);CS1591;xUnit1013</NoWarn>
   </PropertyGroup>
   <PropertyGroup>
