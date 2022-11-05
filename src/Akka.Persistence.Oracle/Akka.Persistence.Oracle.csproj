@@ -18,7 +18,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Akka.Persistence.Query.Sql" Version="$(AkkaVersion)" />
+    <PackageReference Include="Akka.Persistence.Sql.Common" Version="$(AkkaVersion)" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'net462'">
