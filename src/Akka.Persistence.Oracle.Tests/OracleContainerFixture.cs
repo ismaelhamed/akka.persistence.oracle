@@ -22,9 +22,9 @@ namespace Akka.Persistence.Oracle.Tests
         protected readonly string OracleContainerName = $"Oracle-{Guid.NewGuid():N}";
         protected DockerClient Client;
 
-        protected string ImageName => "gvenzl/oracle-xe";
-        protected string Tag => "latest";
-        protected string OracleImageName => $"{ImageName}:{Tag}";
+        protected static string ImageName => "gvenzl/oracle-xe";
+        protected static string Tag => "21-slim";
+        protected static string OracleImageName => $"{ImageName}:{Tag}";
 
         public OracleContainerFixture()
         {

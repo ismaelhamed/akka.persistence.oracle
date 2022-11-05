@@ -1,3 +1,7 @@
+#### 1.4.45 November 5 2022
+
+Updated to Akka.Persistence v1.4.45, Oracle Data Provider to v21.8.0, and Oracle Data Provider for .NET Core to v3.21.80
+
 #### 1.4.39 June 18 2022
 
 Updated to Akka.Persistence v1.4.39, Oracle Data Provider to v21.6.1, and Oracle Data Provider for .NET Core to v3.21.61

@@ -20,7 +20,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Akka.Persistence.Oracle", "
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Akka.Persistence.Oracle.Tests", "Akka.Persistence.Oracle.Tests\Akka.Persistence.Oracle.Tests.csproj", "{1EBA528D-432C-4DE4-B123-CD9BCD72B4F9}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Benchmark", "Benchmark\Benchmark.csproj", "{D481A2CC-8C48-46B2-AE23-9E6AC5A0DDA4}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Benchmark", "Benchmark\Benchmark.csproj", "{D481A2CC-8C48-46B2-AE23-9E6AC5A0DDA4}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

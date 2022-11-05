@@ -8,12 +8,14 @@
     <NoWarn>$(NoWarn);CS1591;xUnit1013</NoWarn>
   </PropertyGroup>
   <PropertyGroup>
-    <XunitVersion>2.4.1</XunitVersion>
-    <AkkaVersion>1.4.39</AkkaVersion>
-    <TestSdkVersion>17.2.0</TestSdkVersion>
-    <NetTestVersion>net462</NetTestVersion>
-    <NetCoreTestVersion>netcoreapp3.1</NetCoreTestVersion>
+    <XunitVersion>2.4.2</XunitVersion>
+    <AkkaVersion>1.4.45</AkkaVersion>
+    <OracleNetVersion>21.8.0</OracleNetVersion>
+    <OracleNetCoreVersion>3.21.80</OracleNetCoreVersion>
+    <TestSdkVersion>17.3.2</TestSdkVersion>
+    <NetTestVersion>net462</NetTestVersion>    
     <NetStandardLibVersion>netstandard2.1</NetStandardLibVersion>
+    <NetCoreTestVersion>netcoreapp3.1</NetCoreTestVersion>
     <AkkaPackageTags>akka;actors;actor model;concurrency;persistence;eventsource;oracle</AkkaPackageTags>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
