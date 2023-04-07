@@ -1,5 +1,4 @@
-﻿using Akka;
-using Akka.Actor;
+﻿using Akka.Actor;
 using Akka.Persistence;
 
 namespace Benchmark
@@ -63,28 +62,35 @@ namespace Benchmark
 
         public sealed override string PersistenceId { get; }
 
-        protected override bool ReceiveRecover(object message) => message.Match()
-            .With<Stored>(s => state += s.Value)
-            .WasHandled;
+        protected override bool ReceiveRecover(object message)
+        {
+            if (message is Stored stored)
+            {
+                state += stored.Value;
+                return true;
+            }
+            return false;
+        }
 
-        protected override bool ReceiveCommand(object message) => message.Match()
-            .With<Store>(store =>
+        protected override bool ReceiveCommand(object message)
+        {
+            switch (message)
             {
-                Persist(new Stored(store.Value), s =>
-                {
-                    state += s.Value;
-                });
-            })
-            .With<Init>(_ =>
-            {
-                var sender = Sender;
-                Persist(new Stored(0), s =>
-                {
-                    state += s.Value;
-                    sender.Tell(Done.Instance);
-                });
-            })
-            .With<Finish>(_ => Sender.Tell(new Finished(state)))
-            .WasHandled;
+                case Store store:
+                    Persist(new Stored(store.Value), stored => state += stored.Value);
+                    return true;
+                case Init _:
+                    Persist(new Stored(0), stored =>
+                    {
+                        state += stored.Value;
+                        Sender.Tell(Done.Instance);
+                    });
+                    return true;
+                case Finish _:
+                    Sender.Tell(new Finished(state));
+                    return true;
+            }
+            return false;
+        }
     }
 }
