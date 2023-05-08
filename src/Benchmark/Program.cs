@@ -22,7 +22,6 @@ namespace Benchmark
                         class = ""Akka.Persistence.Oracle.Journal.BatchingOracleJournal, Akka.Persistence.Oracle""
                         plugin-dispatcher = ""akka.actor.default-dispatcher""
                         table-name = EVENTJOURNAL
-                        schema-name = AKKA_PERSISTENCE_TEST
                         auto-initialize = on
                         connection-string-name = ""TestDb""
 			            connection-timeout = 30s

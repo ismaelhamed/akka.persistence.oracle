@@ -226,7 +226,7 @@ END;")
             var sequenceNr = reader.GetInt64(SequenceNrIndex);
             var timestamp = reader.GetInt64(TimestampIndex);
             var isDeleted = Convert.ToBoolean(reader.GetInt16(IsDeletedIndex));
-            var manifest = reader.GetString(ManifestIndex).Trim(); // HACK
+            var manifest = reader.IsDBNull(ManifestIndex) ? null : reader.GetString(ManifestIndex).Trim();
             var payload = reader[PayloadIndex];
 
             object deserialized;
@@ -234,7 +234,11 @@ END;")
             {
                 // Support old writes that did not set the serializer id
                 var type = Type.GetType(manifest, true);
+#pragma warning disable CS0618
+                // Backward compatibility code, we still need to use the old default serializer on read to support legacy data
                 var deserializer = serialization.FindSerializerForType(type, Setup.DefaultSerializer);
+#pragma warning restore CS0618
+
                 // TODO: hack. Replace when https://github.com/akkadotnet/akka.net/issues/3811
                 deserialized = Akka.Serialization.Serialization.WithTransport(
                     serialization.System,
@@ -244,6 +248,7 @@ END;")
             else
             {
                 var serializerId = reader.GetInt32(SerializerIdIndex);
+                // TODO: hack. Replace when https://github.com/akkadotnet/akka.net/issues/3811
                 deserialized = serialization.Deserialize((byte[])payload, serializerId, manifest);
             }
 
@@ -252,24 +257,20 @@ END;")
 
         protected override void WriteEvent(OracleCommand command, IPersistentRepresentation persistent, string tags = "")
         {
+#pragma warning disable CS0618
+            // Backward compatibility code, we still need to use the old default serializer on read to support legacy data
             var serializer = serialization.FindSerializerForType(persistent.Payload.GetType(), Setup.DefaultSerializer);
+#pragma warning restore CS0618
 
             var (binary, manifest) = Akka.Serialization.Serialization.WithTransport(serialization.System, (persistent.Payload, serializer), state =>
             {
                 var (thePayload, theSerializer) = state;
-                var thisManifest = " "; // HACK
-
-                if (serializer is SerializerWithStringManifest stringManifest)
+                var thisManifest = serializer switch
                 {
-                    thisManifest = stringManifest.Manifest(thePayload);
-                }
-                else
-                {
-                    if (serializer.IncludeManifest)
-                    {
-                        thisManifest = thePayload.GetType().TypeQualifiedName();
-                    }
-                }
+                    SerializerWithStringManifest stringManifest => stringManifest.Manifest(thePayload),
+                    { IncludeManifest: true } => thePayload.GetType().TypeQualifiedName(),
+                    _ => " ", // HACK: Oracle treats empty strings like nulls
+                };
 
                 return (theSerializer.ToBinary(thePayload), thisManifest);
             });
