@@ -2,18 +2,18 @@
   <PropertyGroup>
     <Copyright>Copyright © 2023 Ismael Hamed</Copyright>
     <Authors>Ismael Hamed</Authors>
-    <VersionPrefix>1.4.48</VersionPrefix>
+    <VersionPrefix>1.4.50</VersionPrefix>
     <PackageIconUrl>http://getakka.net/images/AkkaNetLogo.Normal.png</PackageIconUrl>
     <PackageProjectUrl>https://github.com/ismaelhamed/akka.persistence.oracle</PackageProjectUrl>
     <PackageLicenseUrl>https://github.com/ismaelhamed/akka.persistence.oracle/blob/dev/LICENSE</PackageLicenseUrl>
-    <PackageReleaseNotes>Updated to Akka.Persistence v1.4.48, Oracle Data Provider to v21.9.0, and Oracle Data Provider for .NET Core to v3.21.90</PackageReleaseNotes>
+    <PackageReleaseNotes>Updated to Akka.Persistence v1.4.50, Oracle Data Provider to v21.10.0, and Oracle Data Provider for .NET Core to v3.21.100</PackageReleaseNotes>
     <NoWarn>$(NoWarn);CS1591;xUnit1013</NoWarn>
   </PropertyGroup>
   <PropertyGroup>
     <XunitVersion>2.4.2</XunitVersion>
-    <AkkaVersion>1.4.48</AkkaVersion>
-    <OracleNetVersion>21.9.0</OracleNetVersion>
-    <OracleNetCoreVersion>3.21.90</OracleNetCoreVersion>
+    <AkkaVersion>1.4.50</AkkaVersion>
+    <OracleNetVersion>21.10.0</OracleNetVersion>
+    <OracleNetCoreVersion>3.21.100</OracleNetCoreVersion>
     <TestSdkVersion>17.3.2</TestSdkVersion>
     <NetTestVersion>net462</NetTestVersion>
     <NetStandardLibVersion>netstandard2.1</NetStandardLibVersion>
