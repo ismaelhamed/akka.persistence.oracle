@@ -211,7 +211,7 @@ END;";
             var sequenceNr = reader.GetInt64(SequenceNrIndex);
             var timestamp = reader.GetInt64(TimestampIndex);
             var isDeleted = Convert.ToBoolean(reader.GetInt16(IsDeletedIndex));
-            var manifest = reader.GetString(ManifestIndex).Trim(); // HACK
+            var manifest = reader.IsDBNull(ManifestIndex) ? null : reader.GetString(ManifestIndex).Trim();
             var payload = reader[PayloadIndex];
 
             object deserialized;
@@ -219,11 +219,15 @@ END;";
             {
                 // Support old writes that did not set the serializer id
                 var type = Type.GetType(manifest, true);
+#pragma warning disable CS0618
+                // Backward compatibility code, we still need to use the old default serializer on read to support legacy data
                 var deserializer = Serialization.FindSerializerForType(type, Configuration.DefaultSerializer);
+#pragma warning restore CS0618
+
                 // TODO: hack. Replace when https://github.com/akkadotnet/akka.net/issues/3811
                 deserialized = Akka.Serialization.Serialization.WithTransport(
-                    Serialization.System, 
-                    (deserializer, (byte[])payload, type), 
+                    Serialization.System,
+                    (deserializer, (byte[])payload, type),
                     state => state.deserializer.FromBinary(state.Item2, state.type));
             }
             else
@@ -238,26 +242,22 @@ END;";
 
         protected override void WriteEvent(DbCommand command, IPersistentRepresentation e, IImmutableSet<string> tags)
         {
+#pragma warning disable CS0618
+            // Backward compatibility code, we still need to use the old default serializer on read to support legacy data
             var serializer = Serialization.FindSerializerForType(e.Payload.GetType(), Configuration.DefaultSerializer);
+#pragma warning restore CS0618
 
             var (binary, manifest) = Akka.Serialization.Serialization.WithTransport(Serialization.System, (e.Payload, serializer), state =>
             {
-                  var (thePayload, theSerializer) = state;
-                  var thisManifest = " "; // HACK
+                var (thePayload, theSerializer) = state;
+                var thisManifest = serializer switch
+                {
+                    SerializerWithStringManifest stringManifest => stringManifest.Manifest(thePayload),
+                    { IncludeManifest: true } => thePayload.GetType().TypeQualifiedName(),
+                    _ => " ", // HACK: Oracle treats empty strings like nulls
+                };
 
-                  if (serializer is SerializerWithStringManifest stringManifest)
-                  {
-                      thisManifest = stringManifest.Manifest(thePayload);
-                  }
-                  else
-                  {
-                      if (serializer.IncludeManifest)
-                      {
-                          thisManifest = thePayload.GetType().TypeQualifiedName();
-                      }
-                  }
-
-                  return (theSerializer.ToBinary(thePayload), thisManifest);
+                return (theSerializer.ToBinary(thePayload), thisManifest);
             });
 
             AddParameter(command, ":PersistenceId", OracleDbType.NVarchar2, e.PersistenceId);
