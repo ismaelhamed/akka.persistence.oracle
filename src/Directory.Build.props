@@ -6,15 +6,15 @@
     <PackageIconUrl>http://getakka.net/images/AkkaNetLogo.Normal.png</PackageIconUrl>
     <PackageProjectUrl>https://github.com/ismaelhamed/akka.persistence.oracle</PackageProjectUrl>
     <PackageLicenseUrl>https://github.com/ismaelhamed/akka.persistence.oracle/blob/dev/LICENSE</PackageLicenseUrl>
-    <PackageReleaseNotes>Updated to Akka.Persistence v1.5.6</PackageReleaseNotes>
+    <PackageReleaseNotes>Updated to Akka.Persistence v1.5.14, Oracle Data Provider to v21.12.0, and Oracle Data Provider for .NET Core to v3.21.120</PackageReleaseNotes>
     <NoWarn>$(NoWarn);CS1591;xUnit1013</NoWarn>
   </PropertyGroup>
   <PropertyGroup>
-    <XunitVersion>2.4.2</XunitVersion>
-    <AkkaVersion>1.5.6</AkkaVersion>
-    <OracleNetVersion>21.10.0</OracleNetVersion>
-    <OracleNetCoreVersion>3.21.100</OracleNetCoreVersion>
-    <TestSdkVersion>17.5.0</TestSdkVersion>
+    <XunitVersion>2.6.2</XunitVersion>
+    <AkkaVersion>1.5.14</AkkaVersion>
+    <OracleNetVersion>21.12.0</OracleNetVersion>
+    <OracleNetCoreVersion>3.21.120</OracleNetCoreVersion>
+    <TestSdkVersion>17.8.0</TestSdkVersion>
     <AkkaPackageTags>akka;actors;actor model;concurrency;persistence;eventsource;oracle</AkkaPackageTags>
   </PropertyGroup>
   <!-- SourceLink support for all Akka.NET projects -->

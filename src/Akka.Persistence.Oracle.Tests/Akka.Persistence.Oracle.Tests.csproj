@@ -7,8 +7,8 @@
 
   <ItemGroup>
     <PackageReference Include="Akka.Persistence.Sql.TestKit" Version="$(AkkaVersion)" />
-    <PackageReference Include="Docker.DotNet" Version="3.125.14" />
-    <PackageReference Include="GitHubActionsTestLogger" Version="2.1.0">
+    <PackageReference Include="Docker.DotNet" Version="3.125.15" />
+    <PackageReference Include="GitHubActionsTestLogger" Version="2.3.3">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
@@ -16,7 +16,7 @@
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="$(TestSdkVersion)" />
     <PackageReference Include="NETStandard.Library" Version="2.0.3" />
     <PackageReference Include="xunit" Version="$(XunitVersion)" />
-    <PackageReference Include="xunit.runner.visualstudio" Version="2.4.5">
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.5.4">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
